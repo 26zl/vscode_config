@@ -1,0 +1,9 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    # Same supply-chain policy as the extensions: no release younger than 5 days.
+    cooldown:
+      default-days: 5

@@ -1,0 +1,98 @@
+# Extension groups for install.sh.
+#
+#   ./install.sh                                  # [core] only
+#   ./install.sh --groups core,k8s,ops            # several groups
+#   ./install.sh --groups all --profile Cybersec  # into a VS Code profile
+#
+# To customise: add an id under a group, or start your own [group] header.
+# Every publisher must also be listed in "extensions.allowed" in settings.json,
+# otherwise VS Code blocks the install.
+#
+# "closed source" marks an extension that ships under a vendor licence with no
+# public source: kept for capability, but it cannot be reviewed before it runs.
+# "unmaintained" marks one whose last Marketplace release is years old — an
+# idle popular publisher account is what a takeover targets.
+
+[core]
+redhat.ansible
+redhat.vscode-yaml
+# The extension pack also installs Pylance (closed source) and debugpy.
+ms-python.python
+charliermarsh.ruff
+# Preview "Python Environments" extension (settings.json references it).
+# Offers to install uv by piping https://astral.sh/uv/install.sh into a shell;
+# settings.json keeps "python-envs.alwaysUseUv" off so it stays a manual choice.
+ms-python.vscode-python-envs
+# Both need system binaries: apt/dnf/brew install shellcheck shfmt
+timonwong.shellcheck
+mkhl.shfmt
+# "Container Tools" + "Docker DX" replaced the retired Docker extension.
+ms-azuretools.vscode-containers
+docker.docker
+hashicorp.terraform
+# Systemd Helper: unit files, mkosi configs, Podman Quadlet.
+hangxingliu.vscode-systemd-support
+# Unmaintained since 2023; grammars only, so nothing of it executes.
+samuelcolvin.jinjahtml
+tamasfe.even-better-toml
+editorconfig.editorconfig
+# MIT apart from the "plus" directory, which is under a GitKraken licence.
+eamodio.gitlens
+# Closed source, both of them (the repo is issue tracking only).
+ms-vscode-remote.remote-ssh
+ms-vscode-remote.remote-containers
+davidanson.vscode-markdownlint
+
+[k8s]
+ms-kubernetes-tools.vscode-kubernetes-tools
+redhat.vscode-openshift-connector
+
+[ops]
+# Reading logs, scan output and CSV exports; inline diagnostics.
+emilast.LogFileHighlighter
+mechatroner.rainbow-csv
+usernamehw.errorlens
+
+[security]
+# Binary and exploit work: hex editor, native debugger, C/C++, Windows/AD.
+ms-vscode.hexeditor
+llvm-vs-code-extensions.lldb-dap
+# Closed source. llvm-vs-code-extensions.vscode-clangd is the Apache-2.0
+# alternative if that matters more than the debugger integration.
+ms-vscode.cpptools
+ms-vscode.powershell
+snyk-security.snyk-vulnerability-scanner
+
+[fullstack]
+dbaeumer.vscode-eslint
+esbenp.prettier-vscode
+bradlc.vscode-tailwindcss
+vue.volar
+svelte.svelte-vscode
+ms-playwright.playwright
+# Closed source; its repository carries documentation, not the extension.
+ms-ossdata.vscode-pgsql
+# Source-available under the SSPL, which is not an OSI open source licence.
+redis.redis-for-vscode
+github.vscode-pull-request-github
+github.vscode-github-actions
+# Bitbucket PRs, Pipelines and Jira.
+atlassian.atlascode
+ms-vscode.live-server
+
+[windows]
+# Windows-only, so it cannot live in [core]: installing it on Linux or macOS
+# would fail the run. Needed for Remote-WSL windows. Closed source, like the
+# other two remote extensions.
+ms-vscode-remote.remote-wsl
+
+[ai]
+# Cloud assistants: closed source, and both need an account.
+anthropic.claude-code
+openai.chatgpt
+# Continue talks to a local Ollama model; nothing leaves the machine.
+continue.continue
+
+[extras]
+streetsidesoftware.code-spell-checker
+pkief.material-icon-theme

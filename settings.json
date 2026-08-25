@@ -1,0 +1,463 @@
+{
+  // Safe-by-default VS Code user settings: cloned code never runs or reformats
+  // on its own.
+  // Project specifics belong in each repo's .vscode/settings.json, not here.
+  // Safety-relevant defaults are spelled out even when they match VS Code's.
+
+  // --- Security & workspace trust ---
+  // Untrusted folders open with automatic tasks and terminals blocked.
+  "security.workspace.trust.enabled": true,
+  "security.workspace.trust.startupPrompt": "once",
+  "security.workspace.trust.emptyWindow": false,
+  "security.workspace.trust.untrustedFiles": "newWindow",
+  // A cloned repo must never auto-run its own tasks.
+  "task.allowAutomaticTasks": "off",
+  "terminal.integrated.allowInUntrustedWorkspace": false,
+
+  // --- Privacy & predictability ---
+  "telemetry.telemetryLevel": "off",
+  // Covers all Red Hat extensions (Ansible, YAML, ...).
+  "redhat.telemetry.enabled": false,
+  "gitlens.telemetry.enabled": false,
+  // AI is opt-in through the ai group: built-in Copilot surfaces and the AI
+  // features bundled with GitLens and the Atlassian extension stay off.
+  "chat.disableAIFeatures": true,
+  "gitlens.ai.enabled": false,
+  "atlascode.rovodev.enabled": false,
+  // No A/B experiments, no online natural-language settings search.
+  "workbench.enableExperiments": false,
+  "workbench.settings.enableNaturalLanguageSearch": false,
+
+  // --- Extension supply chain ---
+  // Minimum release age for updates: a new version must be 5 days (120 hours)
+  // old before it is auto-installed, so a poisoned release can be caught and
+  // pulled first. The manual Update button bypasses the delay — check the
+  // release date before using it. VS Code exempts its trusted publishers
+  // (Microsoft, GitHub, OpenAI) from the delay.
+  "extensions.autoUpdate": "on",
+  "extensions.autoUpdateDelay": 120,
+  "extensions.autoCheckUpdates": true,
+  // Install allow-list: a key without a dot is a publisher id; anything not
+  // listed is blocked. Extend deliberately when adopting a new publisher.
+  // VS Code matches every ms-* publisher against the org key "microsoft",
+  // not the individual ids; without it all Microsoft extensions are blocked.
+  "extensions.allowed": {
+    "anthropic": true,
+    "atlassian": true,
+    "bradlc": true,
+    "charliermarsh": true,
+    "continue": true,
+    "davidanson": true,
+    "dbaeumer": true,
+    "devsense": true,
+    "docker": true,
+    "eamodio": true,
+    "editorconfig": true,
+    "emilast": true,
+    "esbenp": true,
+    "github": true,
+    "golang": true,
+    "google": true,
+    "hangxingliu": true,
+    "hashicorp": true,
+    "james-yu": true,
+    "llvm-vs-code-extensions": true,
+    "mechatroner": true,
+    "microsoft": true,
+    "mkhl": true,
+    "ms-azuretools": true,
+    "ms-dotnettools": true,
+    "ms-kubernetes-tools": true,
+    "ms-ossdata": true,
+    "ms-playwright": true,
+    "ms-python": true,
+    "ms-vscode": true,
+    "ms-vscode-remote": true,
+    "ms-vsliveshare": true,
+    "ms-windows-ai-studio": true,
+    "msjsdiag": true,
+    "openai": true,
+    "oracle": true,
+    "pdconsec": true,
+    "pkief": true,
+    "platformio": true,
+    "redhat": true,
+    "redis": true,
+    "rust-lang": true,
+    "samuelcolvin": true,
+    "shopify": true,
+    "snyk-security": true,
+    "streetsidesoftware": true,
+    "svelte": true,
+    "swiftlang": true,
+    "tamasfe": true,
+    "timonwong": true,
+    "usernamehw": true,
+    "visualstudiotoolsforunity": true,
+    "vscjava": true,
+    "vue": true
+  },
+  // Settings Sync is off (see README) — the symlink distributes this file.
+  // These stay as a guard for anyone who turns it on: machine-bound state
+  // must never follow the account.
+  "settingsSync.ignoredExtensions": ["snyk-security.snyk-vulnerability-scanner"],
+  "settingsSync.ignoredSettings": [
+    "snyk.advanced.cliPath",
+    "snyk.trustedFolders",
+    "snyk.advanced.customEndpoint",
+    "yaml.schemas"
+  ],
+
+  // --- Editor ---
+  "editor.fontFamily": "'MesloLGLDZ Nerd Font', monospace",
+  "editor.fontSize": 14,
+  "editor.lineHeight": 22,
+  "editor.fontLigatures": true,
+  "editor.minimap.enabled": false,
+  "editor.stickyScroll.enabled": false,
+  "editor.renderLineHighlight": "gutter",
+  "editor.renderWhitespace": "selection",
+  "editor.rulers": [100],
+  // Keep context visible around the cursor (vim 'scrolloff').
+  "editor.cursorSurroundingLines": 8,
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": true,
+  "editor.guides.indentation": true,
+  "editor.suggestSelection": "first",
+  "editor.acceptSuggestionOnCommitCharacter": false,
+  // Formatting is always an explicit action (Shift+Alt+F) — no surprise diffs
+  // in files owned by other tools or colleagues.
+  "editor.formatOnSave": false,
+
+  // --- Diff & merge ---
+  // Whitespace matters in YAML/Ansible; never hide it in diffs.
+  "diffEditor.ignoreTrimWhitespace": false,
+  // Collapse unchanged blocks in large diffs; mark moved lines.
+  "diffEditor.hideUnchangedRegions.enabled": true,
+  "diffEditor.experimental.showMoves": true,
+
+  // --- Files ---
+  // Auto-save one second after you stop typing. Two consequences:
+  // format-on-save never runs for afterDelay saves (use "onFocusChange"
+  // if a project needs it), and linters see half-finished edits.
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "files.encoding": "utf8",
+  "files.eol": "\n",
+  "files.trimTrailingWhitespace": true,
+  "files.trimFinalNewlines": true,
+  "files.insertFinalNewline": true,
+  "files.associations": {
+    ".ansible-lint": "yaml",
+    ".yamllint": "yaml",
+    "ansible-navigator.yml": "yaml",
+    "*.j2": "jinja",
+    ".env": "properties",
+    ".env.*": "properties",
+    // An extensionless LICENSE is not Markdown; without this, markdownlint
+    // reports it for having no top-level heading. LICENSE.md still is.
+    "LICENSE": "plaintext",
+    // Sigma detection rules are YAML; HAR captures from devtools are JSON.
+    "*.sigma": "yaml",
+    "*.har": "json"
+  },
+  // Generated/vendored trees: hidden from explorer, search, and file watcher.
+  "files.exclude": {
+    "**/.venv": true,
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.mypy_cache": true,
+    "**/.ruff_cache": true,
+    "**/.tox": true,
+    "**/.terraform": true
+  },
+  "search.exclude": {
+    "**/.venv": true,
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.mypy_cache": true,
+    "**/.ruff_cache": true,
+    "**/.tox": true,
+    "**/.terraform": true,
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.next": true,
+    "**/.svelte-kit": true,
+    "**/coverage": true
+  },
+  "files.watcherExclude": {
+    "**/.venv/**": true,
+    "**/__pycache__/**": true,
+    "**/.pytest_cache/**": true,
+    "**/.mypy_cache/**": true,
+    "**/.ruff_cache/**": true,
+    "**/.tox/**": true,
+    "**/.terraform/**": true,
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/.next/**": true,
+    "**/.svelte-kit/**": true,
+    "**/coverage/**": true
+  },
+  // Guard against accidentally editing generated trees while debugging.
+  "files.readonlyInclude": {
+    "**/.venv/**": true,
+    "**/.terraform/**": true
+  },
+
+  // --- Search ---
+  // Case-insensitive until the query contains an uppercase letter.
+  "search.smartCase": true,
+  "search.showLineNumbers": true,
+
+  // --- Workbench & explorer ---
+  "workbench.startupEditor": "none",
+  "workbench.editor.labelFormat": "short",
+  "workbench.editor.enablePreview": false,
+  // Mark tabs that are still dirty during the auto-save delay.
+  "workbench.editor.highlightModifiedTabs": true,
+  "workbench.tree.enableStickyScroll": false,
+  "explorer.compactFolders": false,
+
+  // --- Terminal ---
+  "terminal.integrated.fontFamily": "MesloLGLDZ Nerd Font",
+  "terminal.integrated.fontSize": 14,
+  "terminal.integrated.lineHeight": 1.1,
+  "terminal.integrated.scrollback": 20000,
+  "terminal.integrated.cursorBlinking": true,
+  "terminal.integrated.shellIntegration.enabled": true,
+  "terminal.integrated.gpuAcceleration": "off",
+  "terminal.integrated.mouseWheelScrollSensitivity": 3,
+  // Keep VS Code's warning when shell paste protection may not be enough.
+  "terminal.integrated.enableMultiLinePasteWarning": "auto",
+  // Warn before closing the window while ssh/top/etc. is still running.
+  "terminal.integrated.confirmOnExit": "hasChildProcesses",
+  "terminal.integrated.defaultProfile.linux": "zsh",
+  // First existing path wins, so a minimal server without zsh still opens
+  // a shell instead of failing.
+  "terminal.integrated.profiles.linux": {
+    "zsh": {
+      "path": ["/usr/bin/zsh", "/bin/zsh", "/usr/local/bin/zsh", "/bin/bash"],
+      "args": ["-l"]
+    }
+  },
+  // Tasks and tools get plain bash, independent of the interactive shell.
+  "terminal.integrated.automationProfile.linux": {
+    "path": "/bin/bash"
+  },
+  "terminal.integrated.defaultProfile.osx": "zsh",
+  "terminal.integrated.automationProfile.osx": {
+    "path": "/bin/bash"
+  },
+  // VS Code's built-in profile already prefers PowerShell 7 and falls back to
+  // Windows PowerShell, so no path is hardcoded here.
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  // Windows PowerShell ships with every install, so tasks and tools get a
+  // shell that is there even when PowerShell 7 is not.
+  "terminal.integrated.automationProfile.windows": {
+    "path": "powershell.exe"
+  },
+
+  // --- Git & source control ---
+  "git.confirmSync": false,
+  "git.enableSmartCommit": false,
+  // No background network traffic without asking.
+  "git.autofetch": false,
+  "git.allowForcePush": false,
+  // Prompt before committing straight to a protected branch.
+  "git.branchProtection": ["main", "master"],
+  "git.branchProtectionPrompt": "alwaysPrompt",
+  // Drop remote-tracking refs that no longer exist upstream.
+  "git.pruneOnFetch": true,
+  // Conventional commit-message lengths: 50 subject / 72 body.
+  "[scminput]": {
+    "editor.rulers": [50, 72]
+  },
+
+  // --- Python ---
+  "python.terminal.useEnvFile": false,
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.autoImportCompletions": true,
+  "python-envs.terminal.autoActivationType": "command",
+  "python-envs.alwaysUseUv": false,
+  // POSIX layout on purpose: ansible-core has no Windows control node, so on
+  // Windows this applies inside WSL or a Remote-SSH window, never locally.
+  "ansible.python.interpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "ansible.ansible.path": "ansible",
+  "ansible.ansibleNavigator.path": "ansible-navigator",
+  "ansible.ansible.reuseTerminal": true,
+  "ansible.ansible.useFullyQualifiedCollectionNames": true,
+  "ansible.validation.enabled": true,
+  "ansible.validation.lint.enabled": true,
+  "ansible.validation.lint.path": "ansible-lint",
+  // Lint fixes rewrite files; keep them a deliberate action.
+  "ansible.validation.lint.autoFixOnSave": false,
+  "ansible.completion.provideRedirectModules": true,
+  "ansible.completion.provideModuleOptionAliases": true,
+  "ansible.executionEnvironment.enabled": false,
+  "ansible.executionEnvironment.containerEngine": "podman",
+  "ansible.executionEnvironment.pull.policy": "missing",
+  // No cloud AI suggestions from the Ansible extension.
+  "ansible.lightspeed.enabled": false,
+
+  // --- YAML ---
+  // Docker DX and the GitHub Actions extension validate these files with
+  // their own schemas; schemastore detection would fight them.
+  "yaml.disableSchemaDetection": [
+    "**/docker-compose.yml",
+    "**/docker-compose.yaml",
+    "**/docker-compose.*.yml",
+    "**/docker-compose.*.yaml",
+    "**/compose.yml",
+    "**/compose.yaml",
+    "**/compose.*.yml",
+    "**/compose.*.yaml"
+  ],
+  // Silence "unresolved tag" noise: Ansible !vault/!unsafe, GitLab !reference.
+  "yaml.customTags": [
+    "!vault scalar",
+    "!unsafe scalar",
+    "!reference sequence"
+  ],
+
+  // --- Shell ---
+  // Follow source'd files so functions and variables resolve across scripts.
+  "shellcheck.customArgs": ["-x"],
+
+  // --- Web / full stack ---
+  // Keep imports correct when files are moved or renamed.
+  "js/ts.updateImportsOnFileMove.enabled": "always",
+
+  // --- Per-language overrides ---
+  "[ansible]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.detectIndentation": false,
+    "editor.formatOnSave": false
+  },
+  "[yaml]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.detectIndentation": false,
+    "editor.formatOnSave": false
+  },
+  "[python]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4,
+    "editor.detectIndentation": false,
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "[shellscript]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.detectIndentation": false,
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": "mkhl.shfmt"
+  },
+  // Prettier is in the opt-in full stack group in extensions.txt.
+  "[typescript]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.detectIndentation": false,
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.detectIndentation": false,
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.detectIndentation": false,
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.detectIndentation": false,
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[html]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.detectIndentation": false,
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[css]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.detectIndentation": false,
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[scss]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.detectIndentation": false,
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[vue]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.detectIndentation": false,
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[svelte]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.detectIndentation": false,
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "[jsonc]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "[terraform]": {
+    "editor.defaultFormatter": "hashicorp.terraform"
+  },
+  "[terraform-vars]": {
+    "editor.defaultFormatter": "hashicorp.terraform"
+  },
+  // Trailing double-space is a hard line break in Markdown; don't trim it.
+  "[markdown]": {
+    "files.trimTrailingWhitespace": false
+  }
+
+  // --- Opt-in extras (uncomment where relevant) ---
+  // Offline or locked-down servers — fetch extensions locally, push over SSH:
+  // "remote.downloadExtensionsLocally": true,
+  // Restricted egress — no schema downloads from schemastore.org:
+  // "yaml.schemaStore.enable": false,
+  // "evenBetterToml.schema.enabled": false,
+  // Auto-install core tooling on every SSH remote:
+  // "remote.SSH.defaultExtensions": ["timonwong.shellcheck", "redhat.ansible"],
+  // Podman instead of Docker for Dev Containers and Container Tools
+  // (unset = auto-detect, which picks the running Docker engine):
+  // "dev.containers.dockerPath": "podman",
+  // "containers.containerClient": "com.microsoft.visualstudio.containers.podman",
+  // No prompts to install a repository's recommended extensions:
+  // "extensions.ignoreRecommendations": true,
+  // Analysing unknown code — stop hiding generated trees:
+  // "files.exclude": {},
+  // Fully manual extension updates, stricter than the 120-hour delay:
+  // "extensions.autoUpdate": "off"
+}

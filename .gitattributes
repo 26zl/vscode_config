@@ -1,0 +1,2 @@
+# LF everywhere: a CRLF checkout on Windows would break the shell scripts.
+* text=auto eol=lf
