@@ -19,9 +19,6 @@
   // Covers all Red Hat extensions (Ansible, YAML, ...).
   "redhat.telemetry.enabled": false,
   "gitlens.telemetry.enabled": false,
-  // AI is opt-in through the ai group: built-in Copilot surfaces and the AI
-  // features bundled with GitLens and the Atlassian extension stay off.
-  "chat.disableAIFeatures": true,
   "gitlens.ai.enabled": false,
   "atlascode.rovodev.enabled": false,
   // No A/B experiments, no online natural-language settings search.
@@ -169,7 +166,8 @@
     "**/.mypy_cache": true,
     "**/.ruff_cache": true,
     "**/.tox": true,
-    "**/.terraform": true
+    "**/.terraform": true,
+    "**/.ansible_cache": true
   },
   "search.exclude": {
     "**/.venv": true,
@@ -179,6 +177,8 @@
     "**/.ruff_cache": true,
     "**/.tox": true,
     "**/.terraform": true,
+    "**/.ansible_cache": true,
+    "**/collections/ansible_collections": true,
     "**/node_modules": true,
     "**/dist": true,
     "**/build": true,
@@ -194,6 +194,8 @@
     "**/.ruff_cache/**": true,
     "**/.tox/**": true,
     "**/.terraform/**": true,
+    "**/.ansible_cache/**": true,
+    "**/collections/ansible_collections/**": true,
     "**/node_modules/**": true,
     "**/dist/**": true,
     "**/build/**": true,
@@ -202,9 +204,11 @@
     "**/coverage/**": true
   },
   // Guard against accidentally editing generated trees while debugging.
+  // Galaxy-installed collections: `ansible-galaxy collection verify` flags any edit.
   "files.readonlyInclude": {
     "**/.venv/**": true,
-    "**/.terraform/**": true
+    "**/.terraform/**": true,
+    "**/collections/ansible_collections/**": true
   },
 
   // --- Search ---
@@ -313,7 +317,13 @@
     "**/compose.yml",
     "**/compose.yaml",
     "**/compose.*.yml",
-    "**/compose.*.yaml"
+    "**/compose.*.yaml",
+    "**/.github/workflows/*.yml",
+    "**/.github/workflows/*.yaml",
+    "**/.gitea/workflows/*.yml",
+    "**/.gitea/workflows/*.yaml",
+    "**/.forgejo/workflows/*.yml",
+    "**/.forgejo/workflows/*.yaml"
   ],
   // Silence "unresolved tag" noise: Ansible !vault/!unsafe, GitLab !reference.
   "yaml.customTags": [

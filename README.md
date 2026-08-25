@@ -244,6 +244,11 @@ all three publishers.
 
 ## Bootstrapping project tools
 
+`bootstrap.sh` gives any existing directory a quick tool venv. For a new Ansible
+or Terraform project use [project-scaffolds](https://github.com/26zl/project-scaffolds)
+instead: it lays out the whole project with hash-locked dependencies, verified
+collections and CI, and its generated `.vscode/` files match this configuration.
+
 `bootstrap.sh` runs in the project you are working on, not in this repo:
 
 ```sh
