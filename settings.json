@@ -326,20 +326,24 @@
 
   // --- Per-language overrides ---
   // Sticky scroll stays off elsewhere; in YAML the pinned parent keys show
-  // which indentation level the cursor is in.
-  "[ansible]": {
+  // which indentation level the cursor is in, and keyboard movement inside
+  // indentation snaps to 2-space columns.
+  // YAML values are string tokens, so quick suggestions must cover strings for
+  // option values to pop up; word-based items are off so only the language
+  // server's suggestions appear there.
+  "[ansible][yaml]": {
     "editor.insertSpaces": true,
     "editor.tabSize": 2,
     "editor.detectIndentation": false,
     "editor.formatOnSave": false,
-    "editor.stickyScroll.enabled": true
-  },
-  "[yaml]": {
-    "editor.insertSpaces": true,
-    "editor.tabSize": 2,
-    "editor.detectIndentation": false,
-    "editor.formatOnSave": false,
-    "editor.stickyScroll.enabled": true
+    "editor.stickyScroll.enabled": true,
+    "editor.stickyTabStops": true,
+    "editor.quickSuggestions": {
+      "other": "on",
+      "comments": "off",
+      "strings": "on"
+    },
+    "editor.wordBasedSuggestions": "off"
   },
   "[python]": {
     "editor.insertSpaces": true,
