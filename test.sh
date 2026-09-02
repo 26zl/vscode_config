@@ -3,20 +3,8 @@
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
-# python3 does not exist on a stock Windows install, and the name is a Microsoft
-# Store stub when Python was never installed — probe each candidate instead.
-PYTHON=""
-for candidate in python3 python; do
-  if command -v "$candidate" >/dev/null 2>&1 && "$candidate" -c '' >/dev/null 2>&1; then
-    PYTHON="$candidate"
-    break
-  fi
-done
-# The py launcher is Windows-only and needs a version flag; resolve it to the
-# interpreter path so the command stays one word, quotable on bash 3.2 too.
-if [ -z "$PYTHON" ] && command -v py >/dev/null 2>&1; then
-  PYTHON="$(py -3 -c 'import sys; print(sys.executable)' 2>/dev/null || true)"
-fi
+# shellcheck source=find-python.sh
+. ./find-python.sh
 if [ -z "$PYTHON" ]; then
   echo "no Python 3 found (tried python3, python, py -3)" >&2
   exit 1
@@ -122,13 +110,19 @@ if ! compgen -G "$user_dir/settings.json.backup.*" >/dev/null; then
 fi
 echo "ok: install.sh links settings and backs up existing file"
 
+if ! run_install "$tmp_home" --help >/dev/null; then
+  echo "fail: install.sh --help must exit 0" >&2
+  exit 1
+fi
+echo "ok: install.sh --help"
+
 fake_bin="$tmp_home/bin"
 mkdir -p "$fake_bin"
 # Wrappers, not copies: on Windows "ln -s" copies the .exe without its suffix
 # or its DLLs, so the stub cannot run and install.sh would die for a reason
 # these tests are not looking for.
 for tool in dirname uname mkdir ln; do
-  printf '#!/usr/bin/env sh\nexec "%s" "$@"\n' "$(command -v "$tool")" >"$fake_bin/$tool"
+  printf '#!/bin/sh\nexec "%s" "$@"\n' "$(command -v "$tool")" >"$fake_bin/$tool"
   chmod +x "$fake_bin/$tool"
 done
 missing_home="$tmp_home/missing-code-home"
@@ -248,10 +242,40 @@ if ! grep -qF -- "--python $want_python " "$boot_dir/uv-calls"; then
 fi
 echo "ok: bootstrap.sh targets this platform's venv layout"
 
+# Without uv, bootstrap.sh must fall back to pip inside that same venv; a stub
+# pip module records the call instead of installing anything. PATH holds only
+# the two commands bootstrap.sh needs, so nothing on it may rely on PATH itself.
+site="$("$boot_dir/$want_python" -c 'import pathlib, sysconfig; print(pathlib.Path(sysconfig.get_paths()["purelib"]).as_posix())')"
+mkdir -p "$site/pip"
+: >"$site/pip/__init__.py"
+cat >"$site/pip/__main__.py" <<'PY'
+import os
+import sys
+
+with open(os.environ["PIP_CALLS"], "a", encoding="utf-8") as calls:
+    calls.write(" ".join(sys.argv[1:]) + "\n")
+PY
+nouv_bin="$boot_dir/nouv"
+mkdir -p "$nouv_bin"
+printf '#!/bin/sh\nexec "%s" "$@"\n' "$(command -v "$PYTHON")" >"$nouv_bin/python3"
+printf '#!/bin/sh\nexec "%s" "$@"\n' "$(command -v dirname)" >"$nouv_bin/dirname"
+chmod +x "$nouv_bin/python3" "$nouv_bin/dirname"
+bash_bin="$(command -v bash)"
+(
+  cd "$boot_dir" || exit 1
+  PATH="$nouv_bin" PIP_CALLS="$boot_dir/pip-calls" "$bash_bin" "$repo_dir/bootstrap.sh" python >/dev/null
+)
+if ! grep -qF -- "install --quiet --upgrade pip ruff pytest" "$boot_dir/pip-calls"; then
+  echo "fail: bootstrap.sh did not fall back to pip in the venv" >&2
+  cat "$boot_dir/pip-calls" >&2
+  exit 1
+fi
+echo "ok: bootstrap.sh falls back to pip without uv"
+
 # clean-settings.sh must preserve valid JSON when the Snyk setting is not last.
 clean_dir="$tmp_home/clean-settings"
 mkdir -p "$clean_dir"
-cp clean-settings.sh "$clean_dir/"
+cp clean-settings.sh find-python.sh "$clean_dir/"
 "$PYTHON" - "$clean_dir/settings.json" <<'PY'
 import json
 import sys
@@ -392,7 +416,7 @@ PY
 echo "ok: clean-settings.sh keeps LF line endings"
 
 if command -v shellcheck >/dev/null 2>&1; then
-  shellcheck -x install.sh test.sh clean-settings.sh bootstrap.sh
+  shellcheck -x install.sh test.sh clean-settings.sh bootstrap.sh find-python.sh
   echo "ok: shellcheck"
 else
   echo "skip: shellcheck not installed"

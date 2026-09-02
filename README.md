@@ -5,9 +5,8 @@ and over Remote-SSH. Untrusted folders open in restricted mode with automatic
 tasks and terminals blocked; telemetry, experiments, the AI features bundled
 with GitLens and Atlassian, format-on-save and Git autofetch are off. Anything
 that applies to a single repo belongs in that repo's `.vscode/settings.json`,
-not here; this
-`settings.json` is commented section by section and is the reference for what
-is set and why.
+not here; this `settings.json` is commented section by section and is the
+reference for what is set and why.
 
 ## Install
 
@@ -20,7 +19,7 @@ is set and why.
 ./install.sh --copy                   # copy instead of symlink (Windows)
 ```
 
-Needs VS Code 1.123 or newer for delayed extension updates; without the `code`
+Needs VS Code 1.125 or newer for delayed extension updates; without the `code`
 CLI it exits without changing anything. It symlinks `settings.json` into the
 user directory (`~/.config/Code/User/` on Linux, `~/Library/Application
 Support/Code/User/` on macOS, `%APPDATA%\Code\User\` on Windows), backing up
@@ -76,10 +75,13 @@ its publisher to `extensions.allowed` or VS Code refuses the install. `test.sh`
 fails when a publisher is missing, so the mistake surfaces early.
 
 Installs from unlisted publishers are blocked, and updates wait until a release
-is 5 days old, except for VS Code's trusted publishers. `extensions.txt` marks
-closed-source and unmaintained entries. Cloud services need approval on a
-managed machine: `security` sends code to Snyk, `ai` to Anthropic and OpenAI —
-Continue is the local-only alternative. No role includes `ai`.
+is 5 days old, except for VS Code's trusted publishers. The delay covers
+updates only: a fresh install takes the newest release, so check its
+Marketplace date first or pin it as `publisher.name@1.2.3` in
+`extensions.txt`, which also marks closed-source and unmaintained entries.
+Cloud services need approval on a managed machine: `security` sends code to
+Snyk, `ai` to Anthropic and OpenAI — Continue is the local-only alternative.
+No role includes `ai`.
 
 For a role-specific extension set, use VS Code **Profiles** (gear icon →
 Profiles → New Profile) with *Settings* left shared so this baseline still
@@ -135,9 +137,10 @@ own lines, not after values, or the test complains. `test.sh` and
 `clean-settings.sh` need a Python 3 (`python3`, `python`, then `py -3`).
 
 CI runs the self-check on Ubuntu, macOS and Windows, scans history with
-gitleaks and lints the workflow with actionlint. Dependabot updates the
-checkout SHA; the gitleaks and actionlint versions and checksums in `ci.yml`
-must be updated together from their official release assets.
+gitleaks, lints the workflow with actionlint and checks shell formatting with
+shfmt. Dependabot updates the checkout SHA; the gitleaks, actionlint and shfmt
+versions and checksums in `ci.yml` must be updated together from their
+official release assets.
 
 Settings Sync stays **off** (`code --sync off`): the symlink already
 distributes the file, and Sync both pushed machine-bound extension state (Snyk's
@@ -158,6 +161,7 @@ manual Update button bypasses that — check the "Last updated" date first.
 | `test.sh` | Self-check: settings, groups, installer, allow-list, machine paths |
 | `clean-settings.sh` | Strips machine-specific keys extensions write into `settings.json` |
 | `bootstrap.sh` | Creates a project `.venv` and reports missing system tools |
+| `find-python.sh` | Python 3 lookup sourced by `test.sh`, `clean-settings.sh` and `bootstrap.sh` |
 
 Keybindings, color theme and snippets are deliberately left out — personal, or
 already shipped by the extensions. MIT licensed.

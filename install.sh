@@ -4,6 +4,7 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+usage="usage: $0 [--no-ext] [--copy] [--profile NAME] [--role NAME | --groups a,b|all]"
 
 NO_EXT=0
 COPY=0
@@ -40,8 +41,12 @@ while [ "$#" -gt 0 ]; do
       exit 2
     fi
     ;;
+  -h | --help)
+    echo "$usage"
+    exit 0
+    ;;
   *)
-    echo "usage: $0 [--no-ext] [--copy] [--profile NAME] [--role NAME | --groups a,b|all]" >&2
+    echo "$usage" >&2
     exit 2
     ;;
   esac

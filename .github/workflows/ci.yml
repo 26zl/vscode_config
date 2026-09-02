@@ -52,6 +52,28 @@ jobs:
         run: |
           "$RUNNER_TEMP/gitleaks" git --redact --no-banner .
 
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install shfmt
+        env:
+          # Update the version and checksum together from the release assets.
+          SHFMT_VERSION: 3.14.0
+          SHFMT_SHA256: fe42021c7272ef2d67ea36cbc3031683c625d0badec733ef3a57b567246a0b66
+        run: |
+          bin="$RUNNER_TEMP/shfmt"
+          curl --fail --silent --show-error --location --proto '=https' --tlsv1.2 \
+            "https://github.com/mvdan/sh/releases/download/v${SHFMT_VERSION}/shfmt_v${SHFMT_VERSION}_linux_amd64" \
+            --output "$bin"
+          echo "${SHFMT_SHA256}  ${bin}" | sha256sum --check -
+          chmod +x "$bin"
+      - name: Check shell formatting
+        run: |
+          "$RUNNER_TEMP/shfmt" --diff install.sh test.sh clean-settings.sh bootstrap.sh find-python.sh
+
   actionlint:
     runs-on: ubuntu-latest
     steps:
