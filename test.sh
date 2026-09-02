@@ -137,7 +137,31 @@ fi
 echo "ok: install.sh reports a missing code CLI"
 
 cat >"$fake_bin/code" <<'SH'
-#!/usr/bin/env sh
+#!/bin/sh
+if [ "${1:-}" = "--version" ]; then
+  echo "1.124.9"
+  exit 0
+fi
+exit 0
+SH
+chmod +x "$fake_bin/code"
+old_code_home="$tmp_home/old-code-home"
+if PATH="$fake_bin:$PATH" run_install "$old_code_home" >/dev/null 2>&1; then
+  echo "fail: install.sh accepted VS Code older than 1.125" >&2
+  exit 1
+fi
+if [ -e "$old_code_home" ]; then
+  echo "fail: install.sh changed HOME before the VS Code version check failed" >&2
+  exit 1
+fi
+echo "ok: install.sh requires VS Code 1.125"
+
+cat >"$fake_bin/code" <<'SH'
+#!/bin/sh
+if [ "${1:-}" = "--version" ]; then
+  echo "1.125.0"
+  exit 0
+fi
 exit 1
 SH
 chmod +x "$fake_bin/code"
@@ -149,8 +173,12 @@ echo "ok: install.sh reports extension install failures"
 
 # A role must expand to exactly its documented groups, and unknown roles fail.
 cat >"$fake_bin/code" <<'SH'
-#!/usr/bin/env sh
-echo "$@"
+#!/bin/sh
+if [ "${1:-}" = "--version" ]; then
+  echo "1.125.0"
+else
+  echo "$@"
+fi
 SH
 role_out="$(PATH="$fake_bin:$PATH" run_install "$tmp_home" --role sysadmin 2>/dev/null | grep -- --install-extension | sort)"
 groups_out="$(PATH="$fake_bin:$PATH" run_install "$tmp_home" --groups core,k8s,ops 2>/dev/null | grep -- --install-extension | sort)"
@@ -167,6 +195,29 @@ if PATH="$fake_bin:$PATH" run_install "$tmp_home" --role sysadmin --groups ops >
   exit 1
 fi
 echo "ok: roles expand to their groups"
+
+cat >"$fake_bin/code" <<'SH'
+#!/bin/sh
+if [ "${1:-}" = "--version" ]; then
+  echo "1.125.0"
+  exit 0
+fi
+if [ "${1:-}" = "--profile" ] && [ "${3:-}" = "--list-extensions" ]; then
+  exit 1
+fi
+exit 0
+SH
+chmod +x "$fake_bin/code"
+profile_home="$tmp_home/profile-home"
+if PATH="$fake_bin:$PATH" run_install "$profile_home" --profile Missing >/dev/null 2>&1; then
+  echo "fail: install.sh accepted an unavailable profile" >&2
+  exit 1
+fi
+if [ -e "$profile_home" ]; then
+  echo "fail: install.sh changed HOME before the profile preflight failed" >&2
+  exit 1
+fi
+echo "ok: install.sh checks profiles before changing settings"
 
 # --copy is the fallback for machines that cannot create symlinks; it must
 # write a real file and still back up what was there.
@@ -272,6 +323,25 @@ if ! grep -qF -- "install --quiet --upgrade pip ruff pytest" "$boot_dir/pip-call
 fi
 echo "ok: bootstrap.sh falls back to pip without uv"
 
+py_bin="$tmp_home/py-bin"
+mkdir -p "$py_bin"
+cat >"$py_bin/python3" <<'SH'
+#!/bin/sh
+[ -z "${2:-}" ]
+SH
+cp "$py_bin/python3" "$py_bin/python"
+cat >"$py_bin/py" <<'SH'
+#!/bin/sh
+printf '%s\n' "$PY_FALLBACK_TARGET"
+SH
+chmod +x "$py_bin/python3" "$py_bin/python" "$py_bin/py"
+# shellcheck disable=SC2016  # Variables expand in the child shell.
+if ! PATH="$py_bin" PY_FALLBACK_TARGET="$(command -v "$PYTHON")" "$bash_bin" -c '. ./find-python.sh; [ "$PYTHON" = "$PY_FALLBACK_TARGET" ]'; then
+  echo "fail: find-python.sh accepted a non-Python-3 interpreter" >&2
+  exit 1
+fi
+echo "ok: find-python.sh requires Python 3 and falls back to py -3"
+
 # clean-settings.sh must preserve valid JSON when the Snyk setting is not last.
 clean_dir="$tmp_home/clean-settings"
 mkdir -p "$clean_dir"
@@ -282,7 +352,7 @@ import sys
 
 settings = {
     "first": True,
-    "snyk.advanced.cliPath": "/" + "Users/example/Library/Application Support/snyk/cli",
+    "snyk.advanced.cliPath": "/" + "Users/example/[workspace/snyk/cli",
     "nested": {"value": True},
     "last": True,
 }
@@ -400,7 +470,6 @@ Path(sys.argv[1]).write_text(
     '{\n  "keep": true,\n'
     '  "snyk.advanced.customEndpoint": "https://api.snyk.io"\n}\n',
     encoding="utf-8",
-    newline="\n",
 )
 PY
 bash "$clean_dir/clean-settings.sh" >/dev/null

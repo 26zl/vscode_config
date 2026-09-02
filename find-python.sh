@@ -5,7 +5,7 @@
 # Store stub when Python was never installed — probe each candidate instead.
 PYTHON=""
 for candidate in python3 python; do
-  if command -v "$candidate" >/dev/null 2>&1 && "$candidate" -c '' >/dev/null 2>&1; then
+  if command -v "$candidate" >/dev/null 2>&1 && "$candidate" -c 'import sys; raise SystemExit(sys.version_info[0] != 3)' >/dev/null 2>&1; then
     PYTHON="$candidate"
     break
   fi

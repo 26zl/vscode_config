@@ -4,7 +4,7 @@
   // Project specifics belong in each repo's .vscode/settings.json, not here.
   // Safety-relevant defaults are spelled out even when they match VS Code's.
 
-  // --- Security & workspace trust ---
+  // Security and workspace trust
   // Untrusted folders open with automatic tasks and terminals blocked.
   "security.workspace.trust.enabled": true,
   "security.workspace.trust.startupPrompt": "once",
@@ -14,7 +14,7 @@
   "task.allowAutomaticTasks": "off",
   "terminal.integrated.allowInUntrustedWorkspace": false,
 
-  // --- Privacy & predictability ---
+  // Privacy and predictability
   "telemetry.telemetryLevel": "off",
   // Covers all Red Hat extensions (Ansible, YAML, ...).
   "redhat.telemetry.enabled": false,
@@ -25,7 +25,7 @@
   "workbench.enableExperiments": false,
   "workbench.settings.enableNaturalLanguageSearch": false,
 
-  // --- Extension supply chain ---
+  // Extension supply chain
   // Minimum release age for updates: a new version must be 5 days (120 hours)
   // old before it is auto-installed, so a poisoned release can be caught and
   // pulled first. The manual Update button bypasses the delay — check the
@@ -34,6 +34,8 @@
   "extensions.autoUpdate": "on",
   "extensions.autoUpdateDelay": 120,
   "extensions.autoCheckUpdates": true,
+  // Marketplace signature check, CLI installs included.
+  "extensions.verifySignature": true,
   // Install allow-list: a key without a dot is a publisher id; anything not
   // listed is blocked. Extend deliberately when adopting a new publisher.
   // VS Code matches every ms-* publisher against the org key "microsoft",
@@ -89,7 +91,7 @@
     "yaml.schemas"
   ],
 
-  // --- Editor ---
+  // Editor
   "editor.fontFamily": "'MesloLGLDZ Nerd Font', monospace",
   "editor.fontSize": 14,
   "editor.lineHeight": 22,
@@ -110,14 +112,14 @@
   // in files owned by other tools or colleagues.
   "editor.formatOnSave": false,
 
-  // --- Diff & merge ---
+  // Diff and merge
   // Whitespace matters in YAML/Ansible; never hide it in diffs.
   "diffEditor.ignoreTrimWhitespace": false,
   // Collapse unchanged blocks in large diffs; mark moved lines.
   "diffEditor.hideUnchangedRegions.enabled": true,
   "diffEditor.experimental.showMoves": true,
 
-  // --- Files ---
+  // Files
   // Auto-save one second after you stop typing. Two consequences:
   // format-on-save never runs for afterDelay saves (use "onFocusChange"
   // if a project needs it), and linters see half-finished edits.
@@ -195,12 +197,12 @@
     "**/collections/ansible_collections/**": true
   },
 
-  // --- Search ---
+  // Search
   // Case-insensitive until the query contains an uppercase letter.
   "search.smartCase": true,
   "search.showLineNumbers": true,
 
-  // --- Workbench & explorer ---
+  // Workbench and explorer
   "workbench.startupEditor": "none",
   "workbench.editor.labelFormat": "short",
   "workbench.editor.enablePreview": false,
@@ -209,7 +211,7 @@
   "workbench.tree.enableStickyScroll": false,
   "explorer.compactFolders": false,
 
-  // --- Terminal ---
+  // Terminal
   "terminal.integrated.fontFamily": "MesloLGLDZ Nerd Font",
   "terminal.integrated.fontSize": 14,
   "terminal.integrated.lineHeight": 1.1,
@@ -248,7 +250,7 @@
     "path": "powershell.exe"
   },
 
-  // --- Git & source control ---
+  // Git and source control
   "git.confirmSync": false,
   "git.enableSmartCommit": false,
   // No background network traffic without asking.
@@ -264,7 +266,7 @@
     "editor.rulers": [50, 72]
   },
 
-  // --- Python ---
+  // Python
   "python.terminal.useEnvFile": false,
   "python.analysis.typeCheckingMode": "basic",
   "python.analysis.autoImportCompletions": true,
@@ -290,7 +292,7 @@
   // No cloud AI suggestions from the Ansible extension.
   "ansible.lightspeed.enabled": false,
 
-  // --- YAML ---
+  // YAML
   // The YAML extension itself skips schemastore for compose and workflow files
   // when Docker DX or GitHub Actions is installed; no exclusion list needed.
   // Silence "unresolved tag" noise: Ansible !vault/!unsafe, GitLab !reference.
@@ -300,15 +302,15 @@
     "!reference sequence"
   ],
 
-  // --- Shell ---
+  // Shell
   // Follow source'd files so functions and variables resolve across scripts.
   "shellcheck.customArgs": ["-x"],
 
-  // --- Web / full stack ---
+  // Web and full stack
   // Keep imports correct when files are moved or renamed.
   "js/ts.updateImportsOnFileMove.enabled": "always",
 
-  // --- Per-language overrides ---
+  // Per-language overrides
   // Sticky scroll stays off elsewhere; in YAML the pinned parent keys show
   // which indentation level the cursor is in, and keyboard movement inside
   // indentation snaps to 2-space columns.
@@ -428,7 +430,7 @@
     "files.trimTrailingWhitespace": false
   }
 
-  // --- Opt-in extras (uncomment where relevant) ---
+  // Opt-in extras
   // Offline or locked-down servers — fetch extensions locally, push over SSH:
   // "remote.downloadExtensionsLocally": true,
   // Restricted egress — no schema downloads from schemastore.org:

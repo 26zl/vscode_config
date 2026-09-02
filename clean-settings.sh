@@ -23,8 +23,8 @@ lines = path.read_text(encoding="utf-8").splitlines(True)
 top_key = re.compile(r'^\s*"(snyk\.[^"]*|yaml\.schemas)"\s*:')
 
 def brackets(line):
-    # Path values never contain brackets, so counting inside strings is safe.
-    return line.count("[") + line.count("{") - line.count("]") - line.count("}")
+    structural = re.sub(r'"(?:\\.|[^"\\])*"', "", line).split("//", 1)[0]
+    return structural.count("[") + structural.count("{") - structural.count("]") - structural.count("}")
 
 kept, removed, depth, skipping = [], 0, 0, False
 for line in lines:
@@ -62,7 +62,7 @@ except json.JSONDecodeError:
         break
     parse(kept)
 
-# The default would rewrite the whole file with CRLF on Windows.
-path.write_text("".join(kept), encoding="utf-8", newline="\n")
+# Bytes avoid newline translation on Windows and work on older Python 3 releases.
+path.write_bytes("".join(kept).encode("utf-8"))
 print(f"removed {removed} machine-specific line(s)")
 PY

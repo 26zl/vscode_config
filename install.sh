@@ -53,7 +53,7 @@ while [ "$#" -gt 0 ]; do
   shift
 done
 
-# VS Code cannot create profiles from the CLI; make an existing one explicit.
+# Extension installation accepts only existing profiles.
 run_code() {
   if [ -n "$PROFILE" ]; then
     code --profile "$PROFILE" "$@"
@@ -103,8 +103,18 @@ if [ "$NO_EXT" -eq 0 ]; then
     echo "Windows: reinstall VS Code with 'Add to PATH' enabled, or open a new shell." >&2
     exit 1
   fi
+  # Captured so a CLI that fails for another reason is not called outdated.
+  code_version="$(code --version 2>/dev/null | head -1 || true)"
+  if ! printf '%s\n' "$code_version" | awk -F. '$1 ~ /^[0-9]+$/ && $2 ~ /^[0-9]+$/ && ($1 > 1 || ($1 == 1 && $2 >= 125)) { valid = 1 } END { exit !valid }'; then
+    echo "VS Code 1.125 or newer is required, got '$code_version'; no changes made." >&2
+    exit 1
+  fi
   if [ ! -f "$REPO_DIR/extensions.txt" ]; then
     echo "missing $REPO_DIR/extensions.txt" >&2
+    exit 1
+  fi
+  if [ -n "$PROFILE" ] && ! run_code --list-extensions >/dev/null; then
+    echo "cannot use VS Code profile '$PROFILE'; no changes made." >&2
     exit 1
   fi
 fi

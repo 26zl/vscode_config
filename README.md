@@ -19,12 +19,14 @@ reference for what is set and why.
 ./install.sh --copy                   # copy instead of symlink (Windows)
 ```
 
-Needs VS Code 1.125 or newer for delayed extension updates; without the `code`
-CLI it exits without changing anything. It symlinks `settings.json` into the
-user directory (`~/.config/Code/User/` on Linux, `~/Library/Application
-Support/Code/User/` on macOS, `%APPDATA%\Code\User\` on Windows), backing up
-an existing file as `settings.json.backup.<date>`. `git pull` here then updates
-the live config; `mv settings.json.backup.<date> settings.json` rolls back.
+Installing extensions requires VS Code 1.125 or newer; without the `code` CLI,
+the default run exits before changing anything (`--no-ext` still installs only
+the settings). It symlinks `settings.json` into the user directory
+(`~/.config/Code/User/` on Linux, `~/Library/Application Support/Code/User/` on
+macOS, `%APPDATA%\Code\User\` on Windows), backing up an existing file as
+`settings.json.backup.<date>`. `git pull` here then updates a linked config. To
+roll back, remove the installed link or copy and rename the backup in that same
+user directory to `settings.json`.
 
 Files auto-save one second after you stop typing, so VS Code skips
 format-on-save; switch `files.autoSave` to `"onFocusChange"` in a project that
@@ -75,18 +77,19 @@ its publisher to `extensions.allowed` or VS Code refuses the install. `test.sh`
 fails when a publisher is missing, so the mistake surfaces early.
 
 Installs from unlisted publishers are blocked, and updates wait until a release
-is 5 days old, except for VS Code's trusted publishers. The delay covers
-updates only: a fresh install takes the newest release, so check its
-Marketplace date first or pin it as `publisher.name@1.2.3` in
-`extensions.txt`, which also marks closed-source and unmaintained entries.
-Cloud services need approval on a managed machine: `security` sends code to
-Snyk, `ai` to Anthropic and OpenAI — Continue is the local-only alternative.
-No role includes `ai`.
+is 5 days old, except for VS Code's trusted publishers. Marketplace signatures
+are verified. The delay covers updates only: a fresh install takes the newest
+release, so check its Marketplace date first or pin it as
+`publisher.name@1.2.3` in `extensions.txt`, which also marks closed-source and
+unmaintained entries. Cloud services need approval on a managed machine:
+`security` sends code to Snyk, `ai` to Anthropic and OpenAI — Continue is the
+local-only alternative. No role includes `ai`.
 
 For a role-specific extension set, use VS Code **Profiles** (gear icon →
 Profiles → New Profile) with *Settings* left shared so this baseline still
-applies, then `./install.sh --profile <name>` to fill it. Profiles cannot be
-created from the CLI, only filled.
+applies, then `./install.sh --profile <name>` to fill it. The extension CLI only
+accepts an existing profile, and the installer checks it before changing the
+settings file.
 
 ## External tools
 
@@ -118,7 +121,8 @@ ruff, ansible-navigator and ansible-creator — `python` gives ruff and pytest
 instead, `all` both — installs `requirements.txt` and any `requirements.yml`
 collections, and reports which system binaries are still missing. On a managed
 machine point `pip` and `uv` at the internal mirror with `PIP_INDEX_URL` and
-`UV_DEFAULT_INDEX`.
+`UV_DEFAULT_INDEX`. The named toolset is not version-pinned; use a project
+lockfile or the scaffold above for a reproducible shared environment.
 
 ## Maintenance
 
@@ -142,7 +146,7 @@ shfmt. Dependabot updates the checkout SHA; the gitleaks, actionlint and shfmt
 versions and checksums in `ci.yml` must be updated together from their
 official release assets.
 
-Settings Sync stays **off** (`code --sync off`): the symlink already
+Keep Settings Sync **off** (`code --sync off`): the symlink already
 distributes the file, and Sync both pushed machine-bound extension state (Snyk's
 CLI path) to every machine and silently dropped the machine-scoped Ansible and
 `python-envs.*` keys. `settingsSync.ignoredSettings` and
