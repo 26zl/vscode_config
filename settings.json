@@ -307,24 +307,8 @@
   "ansible.lightspeed.enabled": false,
 
   // --- YAML ---
-  // Docker DX and the GitHub Actions extension validate these files with
-  // their own schemas; schemastore detection would fight them.
-  "yaml.disableSchemaDetection": [
-    "**/docker-compose.yml",
-    "**/docker-compose.yaml",
-    "**/docker-compose.*.yml",
-    "**/docker-compose.*.yaml",
-    "**/compose.yml",
-    "**/compose.yaml",
-    "**/compose.*.yml",
-    "**/compose.*.yaml",
-    "**/.github/workflows/*.yml",
-    "**/.github/workflows/*.yaml",
-    "**/.gitea/workflows/*.yml",
-    "**/.gitea/workflows/*.yaml",
-    "**/.forgejo/workflows/*.yml",
-    "**/.forgejo/workflows/*.yaml"
-  ],
+  // The YAML extension itself skips schemastore for compose and workflow files
+  // when Docker DX or GitHub Actions is installed; no exclusion list needed.
   // Silence "unresolved tag" noise: Ansible !vault/!unsafe, GitLab !reference.
   "yaml.customTags": [
     "!vault scalar",
@@ -341,17 +325,21 @@
   "js/ts.updateImportsOnFileMove.enabled": "always",
 
   // --- Per-language overrides ---
+  // Sticky scroll stays off elsewhere; in YAML the pinned parent keys show
+  // which indentation level the cursor is in.
   "[ansible]": {
     "editor.insertSpaces": true,
     "editor.tabSize": 2,
     "editor.detectIndentation": false,
-    "editor.formatOnSave": false
+    "editor.formatOnSave": false,
+    "editor.stickyScroll.enabled": true
   },
   "[yaml]": {
     "editor.insertSpaces": true,
     "editor.tabSize": 2,
     "editor.detectIndentation": false,
-    "editor.formatOnSave": false
+    "editor.formatOnSave": false,
+    "editor.stickyScroll.enabled": true
   },
   "[python]": {
     "editor.insertSpaces": true,
