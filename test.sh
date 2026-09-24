@@ -626,6 +626,28 @@ assert json.loads(data)["keep"] is True
 PY
 echo "ok: clean-settings.sh keeps LF line endings"
 
+# The Git clean filter install.sh configures drops extension-written keys on
+# git add and passes a clean file through byte for byte.
+filter_repo="$tmp_home/filter-repo"
+mkdir -p "$filter_repo"
+cp install.sh clean-settings.sh find-python.sh .gitattributes "$filter_repo/"
+git -C "$filter_repo" init -q
+printf '{\n  "keep": true,\n  "yaml.disableSchemaDetection": ["**/compose.yml"]\n}\n' >"$filter_repo/settings.json"
+HOME="$tmp_home/filter-home" APPDATA="$tmp_home/filter-home/AppData/Roaming" XDG_CONFIG_HOME='' \
+  bash "$filter_repo/install.sh" --no-ext >/dev/null
+git -C "$filter_repo" add settings.json
+if [ "$(git -C "$filter_repo" show :settings.json)" != "$(printf '{\n  "keep": true\n}')" ]; then
+  echo "fail: git add kept extension-written keys despite the clean filter" >&2
+  exit 1
+fi
+printf '{\n  "keep": false\n}\n' >"$filter_repo/settings.json"
+git -C "$filter_repo" add settings.json
+if ! git -C "$filter_repo" show :settings.json | cmp -s - "$filter_repo/settings.json"; then
+  echo "fail: the clean filter changed a file without extension-written keys" >&2
+  exit 1
+fi
+echo "ok: git add drops extension-written keys through the clean filter"
+
 # Whatever clean-settings.sh strips must never reach a commit.
 if git rev-parse --git-dir >/dev/null 2>&1; then
   git show :settings.json >"$clean_dir/settings.json"

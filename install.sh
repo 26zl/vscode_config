@@ -290,6 +290,12 @@ link_file() {
   echo "linked: $dst -> $src"
 }
 
+# Commits from this clone leave out the keys extensions write into the linked
+# file; a copy outside Git, or nested in another repo, skips this.
+if command -v git >/dev/null 2>&1 && [ -z "$(git -C "$REPO_DIR" rev-parse --show-prefix 2>/dev/null || echo outside)" ]; then
+  git -C "$REPO_DIR" config filter.vscode-settings.clean 'bash ./clean-settings.sh --filter'
+fi
+
 link_file settings.json
 
 if [ "$NO_EXT" -eq 1 ]; then

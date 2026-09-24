@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Removes machine-specific keys that extensions write into settings.json:
-# snyk.*, yaml.schemas and yaml.disableSchemaDetection.
+# snyk.*, yaml.schemas and yaml.disableSchemaDetection. With --filter it reads
+# stdin and writes stdout instead, as the Git clean filter install.sh sets up.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
@@ -11,12 +12,15 @@ if [ -z "$PYTHON" ]; then
   exit 1
 fi
 
-"$PYTHON" - <<'PY'
+# Strips the keys from the file named in $1, in place.
+clean() {
+  "$PYTHON" - "$1" <<'PY'
 import json
 import re
+import sys
 from pathlib import Path
 
-path = Path("settings.json")
+path = Path(sys.argv[1])
 lines = path.read_text(encoding="utf-8").splitlines(True)
 
 # yaml.schemas and yaml.disableSchemaDetection go as a whole: the baseline sets neither.
@@ -66,3 +70,15 @@ except json.JSONDecodeError:
 path.write_bytes("".join(kept).encode("utf-8"))
 print(f"removed {removed} machine-specific line(s)")
 PY
+}
+
+if [ "${1:-}" = "--filter" ]; then
+  # The Python program itself arrives on stdin, so the content goes through a file.
+  staged="$(mktemp)"
+  trap 'rm -f "$staged"' EXIT
+  cat >"$staged"
+  clean "$staged" >/dev/null
+  cat "$staged"
+else
+  clean settings.json
+fi

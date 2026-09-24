@@ -172,18 +172,18 @@ Collections in a `requirements.yml` still need Galaxy or a local mirror.
 
 ```sh
 ./test.sh
-./clean-settings.sh && git add -A    # one command, see below
-./test.sh                            # rechecks working tree and index
-git commit
+git add -A && git commit
 ```
 
-Cleaning and staging have to be one command: the symlink lets a running
-extension rewrite `settings.json` at any moment, and its machine-specific keys
-and paths would otherwise land in the commit. `test.sh` rejects those keys in
-the index and checks for home paths last, for the same reason; CI runs the same
-checks. Keep comments in `settings.json` on their own lines, not after values,
-or the test complains. `test.sh` and `clean-settings.sh` need a Python 3
-(`python3`, `python`, then `py -3`).
+Extensions rewrite the linked `settings.json` at any moment. `install.sh` sets
+a Git clean filter in this clone that drops their machine-specific keys whenever
+the file is staged, so `git status` can list it as modified while `git add`
+stages nothing; `./clean-settings.sh` strips the same keys from the file itself.
+`test.sh` and CI reject those keys in the index and home paths anywhere; the
+path check runs last, since an extension may rewrite the file in the meantime.
+Keep comments in `settings.json` on their own lines, not after values, or the
+test complains. `test.sh` and `clean-settings.sh` need a Python 3 (`python3`,
+`python`, then `py -3`).
 
 CI runs the self-check on Ubuntu, macOS and Windows, scans history with
 gitleaks, lints the workflow with actionlint and checks shell formatting with

@@ -1,2 +1,5 @@
 # LF everywhere: a CRLF checkout on Windows would break the shell scripts.
 * text=auto eol=lf
+# Keys extensions write into settings.json stay out of commits once install.sh
+# has configured this filter in the clone.
+settings.json filter=vscode-settings
