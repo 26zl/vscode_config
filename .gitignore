@@ -4,3 +4,4 @@ Thumbs.db
 *.swp
 .venv/
 __pycache__/
+vsix/

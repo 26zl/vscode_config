@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Removes machine-specific keys that extensions write into settings.json:
-# snyk.* and yaml.schemas.
+# snyk.*, yaml.schemas and yaml.disableSchemaDetection.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
@@ -19,8 +19,8 @@ from pathlib import Path
 path = Path("settings.json")
 lines = path.read_text(encoding="utf-8").splitlines(True)
 
-# yaml.schemas goes as a whole: the baseline defines none of its own.
-top_key = re.compile(r'^\s*"(snyk\.[^"]*|yaml\.schemas)"\s*:')
+# yaml.schemas and yaml.disableSchemaDetection go as a whole: the baseline sets neither.
+top_key = re.compile(r'^\s*"(snyk\.[^"]*|yaml\.schemas|yaml\.disableSchemaDetection)"\s*:')
 
 def brackets(line):
     structural = re.sub(r'"(?:\\.|[^"\\])*"', "", line).split("//", 1)[0]

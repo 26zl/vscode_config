@@ -196,6 +196,17 @@ if PATH="$fake_bin:$PATH" run_install "$tmp_home" --role sysadmin --groups ops >
 fi
 echo "ok: roles expand to their groups"
 
+typo_home="$tmp_home/typo-home"
+if PATH="$fake_bin:$PATH" run_install "$typo_home" --groups nosuchgroup >/dev/null 2>&1; then
+  echo "fail: install.sh accepted an unknown group" >&2
+  exit 1
+fi
+if [ -e "$typo_home" ]; then
+  echo "fail: install.sh changed HOME before rejecting an unknown group" >&2
+  exit 1
+fi
+echo "ok: install.sh rejects unknown groups before changing settings"
+
 cat >"$fake_bin/code" <<'SH'
 #!/bin/sh
 if [ "${1:-}" = "--version" ]; then
@@ -218,6 +229,132 @@ if [ -e "$profile_home" ]; then
   exit 1
 fi
 echo "ok: install.sh checks profiles before changing settings"
+
+# --download fills a bundle from a local gallery fixture; --offline verifies
+# that bundle and installs it without the Marketplace.
+case "$(uname -s)" in
+Darwin) offline_platform="darwin-x64" ;;
+MINGW* | MSYS* | CYGWIN*) offline_platform="win32-x64" ;;
+*) offline_platform="linux-x64" ;;
+esac
+offline_repo="$tmp_home/offline-repo"
+fake_app="$tmp_home/fake-app"
+sign_dir="$fake_app/node_modules.asar.unpacked/@vscode/vsce-sign/bin"
+mkdir -p "$offline_repo" "$sign_dir"
+cp install.sh download-vsix.sh find-python.sh settings.json "$offline_repo/"
+printf '[core]\ntest.tool\ntest.pinned@0.1.0\n' >"$offline_repo/extensions.txt"
+cat >"$sign_dir/vsce-sign" <<'SH'
+#!/bin/sh
+# Accepts a package only when its signature archive says "signed".
+grep -q signed "$5"
+SH
+chmod +x "$sign_dir/vsce-sign"
+cat >"$fake_bin/code" <<'SH'
+#!/bin/sh
+case "$1" in
+--version) printf '1.139.0\nabc123\nx64\n' ;;
+--locate-shell-integration-path) echo "$FAKE_APP/out/vs/workbench/contrib/terminal/common/scripts/shellIntegration-bash.sh" ;;
+*) echo "$@" >>"$CODE_CALLS" ;;
+esac
+SH
+"$PYTHON" - "$tmp_home/gallery" "$offline_platform" <<'PY'
+import hashlib
+import json
+import sys
+import time
+from pathlib import Path
+
+root, platform = Path(sys.argv[1]), sys.argv[2]
+
+
+def version(ext_id, number, target=None, engine="^1.100.0", days_old=30, prerelease=False, deps=""):
+    assets = root / ext_id / number / (target or "universal")
+    assets.mkdir(parents=True)
+    package = f"{ext_id} {number} {target}".encode()
+    (assets / "Microsoft.VisualStudio.Services.VSIXPackage").write_bytes(package)
+    (assets / "Microsoft.VisualStudio.Services.VsixSignature").write_text("signed")
+    props = {
+        "Microsoft.VisualStudio.Code.Engine": engine,
+        "Microsoft.VisualStudio.Code.PreRelease": str(prerelease).lower(),
+        "Microsoft.VisualStudio.Code.ExtensionDependencies": deps,
+        "Microsoft.VisualStudio.Services.VsixSha256": hashlib.sha256(package).hexdigest(),
+    }
+    entry = {
+        "version": number,
+        "lastUpdated": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime(time.time() - days_old * 86400)),
+        "assetUri": assets.resolve().as_uri(),
+        "properties": [{"key": k, "value": v} for k, v in props.items()],
+    }
+    if target:
+        entry["targetPlatform"] = target
+    return entry
+
+
+def extension(ext_id, *versions):
+    publisher, name = ext_id.split(".")
+    return {"publisher": {"publisherName": publisher}, "extensionName": name, "versions": list(versions)}
+
+
+# Only the platform build of 1.9.0 fits: newer ones are too new for VS Code,
+# pre-release, younger than 5 days or for another platform.
+extensions = [
+    extension(
+        "test.tool",
+        version("test.tool", "3.0.0", platform, engine="^1.200.0"),
+        version("test.tool", "2.2.0", platform, prerelease=True),
+        version("test.tool", "2.1.0", platform, days_old=1),
+        version("test.tool", "2.0.0", "other-os"),
+        version("test.tool", "1.9.0"),
+        version("test.tool", "1.9.0", platform, deps="test.dep,vscode.builtin"),
+    ),
+    extension("test.dep", version("test.dep", "1.0.0")),
+    extension("test.pinned", version("test.pinned", "0.2.0"), version("test.pinned", "0.1.0")),
+]
+(root / "extensionquery").write_text(json.dumps({"results": [{"extensions": extensions}]}))
+PY
+gallery="$("$PYTHON" -c 'import pathlib, sys; print(pathlib.Path(sys.argv[1]).resolve().as_uri())' "$tmp_home/gallery")"
+# Runs the copied install.sh with the fake code CLI against a sandbox home.
+run_offline_repo() {
+  home="$1"
+  shift
+  PATH="$fake_bin:$PATH" FAKE_APP="$fake_app" CODE_CALLS="$tmp_home/code-calls" VSIX_GALLERY="$gallery" \
+    HOME="$home" APPDATA="$home/AppData/Roaming" XDG_CONFIG_HOME='' bash "$offline_repo/install.sh" "$@"
+}
+run_offline_repo "$tmp_home/download-home" --download >/dev/null
+bundle="$offline_repo/vsix/$offline_platform"
+got="$(cd "$bundle" && LC_ALL=C && printf '%s ' *)"
+if [ "$got" != "test.dep-1.0.0.sigzip test.dep-1.0.0.vsix test.pinned-0.1.0.sigzip test.pinned-0.1.0.vsix test.tool-1.9.0.sigzip test.tool-1.9.0.vsix " ]; then
+  echo "fail: --download picked the wrong packages: $got" >&2
+  exit 1
+fi
+if ! grep -q "$offline_platform" "$bundle/test.tool-1.9.0.vsix"; then
+  echo "fail: --download took the universal build over the platform one" >&2
+  exit 1
+fi
+if [ -e "$tmp_home/download-home" ]; then
+  echo "fail: --download changed HOME" >&2
+  exit 1
+fi
+echo "ok: install.sh --download picks fitting releases and their dependencies"
+
+: >"$tmp_home/code-calls"
+run_offline_repo "$tmp_home/offline-home" --offline >/dev/null
+if [ "$(grep -c -- '--do-not-include-pack-dependencies' "$tmp_home/code-calls")" -ne 3 ] ||
+  [ ! -L "$(user_dir_for "$tmp_home/offline-home")/settings.json" ]; then
+  echo "fail: --offline did not link settings and install the bundle" >&2
+  cat "$tmp_home/code-calls" >&2
+  exit 1
+fi
+echo tampered >"$bundle/test.dep-1.0.0.sigzip"
+if run_offline_repo "$tmp_home/tampered-home" --offline >/dev/null 2>&1; then
+  echo "fail: --offline installed a package with a bad signature" >&2
+  exit 1
+fi
+if [ -e "$tmp_home/tampered-home" ]; then
+  echo "fail: --offline changed HOME before the signature check" >&2
+  exit 1
+fi
+echo "ok: install.sh --offline verifies the bundle before it changes anything"
 
 # --copy is the fallback for machines that cannot create symlinks; it must
 # write a real file and still back up what was there.
@@ -286,8 +423,8 @@ case "$(uname -s)" in
 MINGW* | MSYS* | CYGWIN*) want_python=".venv/Scripts/python.exe" ;;
 *) want_python=".venv/bin/python" ;;
 esac
-if ! grep -qF -- "--python $want_python " "$boot_dir/uv-calls"; then
-  echo "fail: bootstrap.sh did not install into $want_python" >&2
+if ! grep -qF -- "pip install --upgrade --python $want_python ruff pytest" "$boot_dir/uv-calls"; then
+  echo "fail: bootstrap.sh did not upgrade the toolset in $want_python" >&2
   cat "$boot_dir/uv-calls" >&2
   exit 1
 fi
@@ -420,7 +557,8 @@ assert not any(k.startswith("snyk.") for k in settings), list(settings)
 assert settings["last"] is True
 PY
 
-# Continue registers its config schema under yaml.schemas with an absolute
+# vscode-yaml writes yaml.disableSchemaDetection for the extensions it defers
+# to; Continue registers its config schema under yaml.schemas with an absolute
 # path into its own extension directory, as the last property.
 "$PYTHON" - "$clean_dir/settings.json" <<'PY'
 import sys
@@ -429,6 +567,9 @@ from pathlib import Path
 home = "/" + "Users/example/.vscode/extensions/continue.continue-2.0.0-darwin-arm64"
 Path(sys.argv[1]).write_text(
     '{\n  "[markdown]": {\n    "files.trimTrailingWhitespace": false\n  },\n'
+    '  "yaml.disableSchemaDetection": [\n'
+    '    "**/compose.yml"\n'
+    '  ],\n'
     '  "yaml.schemas": {\n'
     f'    "file://{home}/config-yaml-schema.json": [\n'
     '      ".continue/**/*.yaml"\n'
@@ -447,6 +588,7 @@ import sys
 raw = open(sys.argv[1], encoding="utf-8").read()
 settings = json.loads(re.sub(r"^[ \t]*//.*$", "", raw, flags=re.M))
 assert "yaml.schemas" not in settings
+assert "yaml.disableSchemaDetection" not in settings
 assert settings["[markdown]"]["files.trimTrailingWhitespace"] is False
 PY
 
@@ -484,8 +626,18 @@ assert json.loads(data)["keep"] is True
 PY
 echo "ok: clean-settings.sh keeps LF line endings"
 
+# Whatever clean-settings.sh strips must never reach a commit.
+if git rev-parse --git-dir >/dev/null 2>&1; then
+  git show :settings.json >"$clean_dir/settings.json"
+  if [ "$(bash "$clean_dir/clean-settings.sh")" != "settings.json already clean" ]; then
+    echo "fail: extension-written keys staged in settings.json (run ./clean-settings.sh)" >&2
+    exit 1
+  fi
+  echo "ok: no extension-written keys staged"
+fi
+
 if command -v shellcheck >/dev/null 2>&1; then
-  shellcheck -x install.sh test.sh clean-settings.sh bootstrap.sh find-python.sh
+  shellcheck -x install.sh test.sh clean-settings.sh bootstrap.sh find-python.sh download-vsix.sh
   echo "ok: shellcheck"
 else
   echo "skip: shellcheck not installed"

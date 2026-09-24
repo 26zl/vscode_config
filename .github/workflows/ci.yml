@@ -61,8 +61,8 @@ jobs:
       - name: Install shfmt
         env:
           # Update the version and checksum together from the release assets.
-          SHFMT_VERSION: 3.14.0
-          SHFMT_SHA256: fe42021c7272ef2d67ea36cbc3031683c625d0badec733ef3a57b567246a0b66
+          SHFMT_VERSION: 3.14.1
+          SHFMT_SHA256: 76e77641faa025814b77f153b29796b8e6fa2fca03e0c76a691608b86c7ea7bf
         run: |
           bin="$RUNNER_TEMP/shfmt"
           curl --fail --silent --show-error --location --proto '=https' --tlsv1.2 \
@@ -72,7 +72,7 @@ jobs:
           chmod +x "$bin"
       - name: Check shell formatting
         run: |
-          "$RUNNER_TEMP/shfmt" --diff install.sh test.sh clean-settings.sh bootstrap.sh find-python.sh
+          "$RUNNER_TEMP/shfmt" --diff install.sh test.sh clean-settings.sh bootstrap.sh find-python.sh download-vsix.sh
 
   actionlint:
     runs-on: ubuntu-latest

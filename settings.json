@@ -38,8 +38,8 @@
   "extensions.verifySignature": true,
   // Install allow-list: a key without a dot is a publisher id; anything not
   // listed is blocked. Extend deliberately when adopting a new publisher.
-  // VS Code matches every ms-* publisher against the org key "microsoft",
-  // not the individual ids; without it all Microsoft extensions are blocked.
+  // Marketplace installs match every Microsoft publisher against the org key
+  // "microsoft"; VSIX installs (install.sh --offline) match the ms-* ids.
   "extensions.allowed": {
     "anthropic": true,
     "atlassian": true,
@@ -88,7 +88,8 @@
     "snyk.advanced.cliPath",
     "snyk.trustedFolders",
     "snyk.advanced.customEndpoint",
-    "yaml.schemas"
+    "yaml.schemas",
+    "yaml.disableSchemaDetection"
   ],
 
   // Editor
@@ -252,7 +253,10 @@
 
   // Git and source control
   "git.confirmSync": false,
+  // Staging stays explicit: smart commit also stages untracked files, and its
+  // "Always" prompt would switch that on for every linked machine.
   "git.enableSmartCommit": false,
+  "git.suggestSmartCommit": false,
   // No background network traffic without asking.
   "git.autofetch": false,
   "git.allowForcePush": false,
@@ -293,8 +297,8 @@
   "ansible.lightspeed.enabled": false,
 
   // YAML
-  // The YAML extension itself skips schemastore for compose and workflow files
-  // when Docker DX or GitHub Actions is installed; no exclusion list needed.
+  // The YAML extension writes its own yaml.disableSchemaDetection list for
+  // Docker DX and GitHub Actions files; clean-settings.sh keeps it out of Git.
   // Silence "unresolved tag" noise: Ansible !vault/!unsafe, GitLab !reference.
   "yaml.customTags": [
     "!vault scalar",
@@ -428,7 +432,17 @@
   // Trailing double-space is a hard line break in Markdown; don't trim it.
   "[markdown]": {
     "files.trimTrailingWhitespace": false
-  }
+  },
+  "yaml.disableSchemaDetection": [
+    "**/docker-compose.yml",
+    "**/docker-compose.yaml",
+    "**/docker-compose.*.yml",
+    "**/docker-compose.*.yaml",
+    "**/compose.yml",
+    "**/compose.yaml",
+    "**/compose.*.yml",
+    "**/compose.*.yaml"
+  ]
 
   // Opt-in extras
   // Offline or locked-down servers — fetch extensions locally, push over SSH:
@@ -436,6 +450,7 @@
   // Restricted egress — no schema downloads from schemastore.org:
   // "yaml.schemaStore.enable": false,
   // "evenBetterToml.schema.enabled": false,
+  // "json.schemaDownload.enable": false,
   // Auto-install core tooling on every SSH remote:
   // "remote.SSH.defaultExtensions": ["timonwong.shellcheck", "redhat.ansible"],
   // Podman instead of Docker for Dev Containers and Container Tools

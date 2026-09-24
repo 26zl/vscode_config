@@ -45,7 +45,7 @@ fi
 
 if command -v uv >/dev/null 2>&1; then
   # shellcheck disable=SC2086  # deliberate word splitting into separate packages
-  uv pip install --python "$venv_python" $packages
+  uv pip install --upgrade --python "$venv_python" $packages
 else
   # shellcheck disable=SC2086
   "$venv_python" -m pip install --quiet --upgrade pip $packages

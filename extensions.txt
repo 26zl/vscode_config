@@ -20,8 +20,8 @@ redhat.vscode-yaml
 ms-python.python
 charliermarsh.ruff
 # Preview "Python Environments" extension (settings.json references it).
-# Offers to install uv by piping https://astral.sh/uv/install.sh into a shell;
-# settings.json keeps "python-envs.alwaysUseUv" off so it stays a manual choice.
+# When no Python is found it offers, in a modal prompt, to install uv by piping
+# https://astral.sh/uv/install.sh into a shell.
 ms-python.vscode-python-envs
 # Both need system binaries: apt/dnf/brew install shellcheck shfmt
 timonwong.shellcheck
