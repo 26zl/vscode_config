@@ -432,17 +432,7 @@
   // Trailing double-space is a hard line break in Markdown; don't trim it.
   "[markdown]": {
     "files.trimTrailingWhitespace": false
-  },
-  "yaml.disableSchemaDetection": [
-    "**/docker-compose.yml",
-    "**/docker-compose.yaml",
-    "**/docker-compose.*.yml",
-    "**/docker-compose.*.yaml",
-    "**/compose.yml",
-    "**/compose.yaml",
-    "**/compose.*.yml",
-    "**/compose.*.yaml"
-  ]
+  }
 
   // Opt-in extras
   // Offline or locked-down servers — fetch extensions locally, push over SSH:
