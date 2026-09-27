@@ -156,6 +156,26 @@ if [ -e "$old_code_home" ]; then
 fi
 echo "ok: install.sh requires VS Code 1.125"
 
+# The Remote-WSL/SSH wrapper prints server download progress before the version.
+cat >"$fake_bin/code" <<'SH'
+#!/bin/sh
+if [ "${1:-}" = "--version" ]; then
+  echo "Installing VS Code Server for Linux x64 (abc123)"
+  echo "1.139.1"
+  echo "abc123"
+  echo "x64"
+  exit 0
+fi
+exit 0
+SH
+chmod +x "$fake_bin/code"
+wrapper_home="$tmp_home/wrapper-home"
+if ! PATH="$fake_bin:$PATH" run_install "$wrapper_home" --groups ops >/dev/null 2>&1; then
+  echo "fail: install.sh rejected the version behind the remote wrapper's install output" >&2
+  exit 1
+fi
+echo "ok: install.sh reads the version past the remote wrapper's output"
+
 cat >"$fake_bin/code" <<'SH'
 #!/bin/sh
 if [ "${1:-}" = "--version" ]; then

@@ -191,7 +191,9 @@ if [ "$NO_EXT" -eq 0 ]; then
     exit 1
   fi
   # Captured so a CLI that fails for another reason is not called outdated.
-  code_info="$(code --version 2>/dev/null || true)"
+  # On a fresh WSL distro or SSH host the remote wrapper first prints
+  # "Installing VS Code Server ..." lines, so start at the version line.
+  code_info="$(code --version 2>/dev/null | sed -n '/^[0-9][0-9]*\.[0-9][0-9]*\.[0-9]/,$p' || true)"
   code_version="$(printf '%s\n' "$code_info" | sed -n 1p)"
   if ! new_enough "$code_version"; then
     echo "VS Code 1.125 or newer is required, got '$code_version'; no changes made." >&2
