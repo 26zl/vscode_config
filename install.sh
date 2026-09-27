@@ -150,6 +150,15 @@ MINGW* | MSYS* | CYGWIN*)
   ;;
 esac
 
+# Every role also takes the Windows-only group when the target is Windows,
+# a --download bundle for it included; on Linux and macOS that group would
+# fail the run, so --groups leaves the choice explicit.
+target_os="$CODE_OS"
+[ -n "$PLATFORM" ] && target_os="${PLATFORM%%-*}"
+if [ -n "$ROLE" ] && [ "$target_os" = win32 ]; then
+  EXT_GROUPS="$EXT_GROUPS,windows"
+fi
+
 # Prints the ids under one [group], or every id when passed "all".
 list_group() {
   awk -v want="$1" '

@@ -62,7 +62,9 @@ cannot elevate on its own.
 
 `extensions.txt` is split into `[groups]`; `install.sh` installs `[core]`
 unless told otherwise. Roles bundle them: `sysadmin` = core,k8s,ops ·
-`cybersec` = core,k8s,ops,security · `fullstack` = core,fullstack,ops.
+`cybersec` = core,k8s,ops,security · `fullstack` = core,fullstack,ops. On
+Windows, or for a `--download --platform win32-*` bundle, every role also
+takes `windows`.
 
 | Group | What |
 | --- | --- |
@@ -71,7 +73,7 @@ unless told otherwise. Roles bundle them: `sysadmin` = core,k8s,ops ·
 | `ops` | Log highlighting, Rainbow CSV, Error Lens |
 | `security` | Hex editor, LLDB, C/C++, PowerShell, Snyk |
 | `fullstack` | ESLint, Prettier, Tailwind, Vue, Svelte, Playwright, PostgreSQL, Redis, GitHub PRs and Actions, Bitbucket and Jira, Live Server |
-| `windows` | Remote-WSL (Windows-only, so it is not in `core`) |
+| `windows` | Remote-WSL (Windows-only, so it is not in `core`; roles add it on Windows) |
 | `ai` | Claude Code, ChatGPT/Codex, Continue (local Ollama model) |
 | `extras` | Spell checker, icon theme |
 

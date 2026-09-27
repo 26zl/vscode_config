@@ -200,10 +200,15 @@ else
   echo "$@"
 fi
 SH
+# On Windows a role also takes the Windows-only group.
+role_groups=core,k8s,ops
+case "$(uname -s)" in
+MINGW* | MSYS* | CYGWIN*) role_groups=core,k8s,ops,windows ;;
+esac
 role_out="$(PATH="$fake_bin:$PATH" run_install "$tmp_home" --role sysadmin 2>/dev/null | grep -- --install-extension | sort)"
-groups_out="$(PATH="$fake_bin:$PATH" run_install "$tmp_home" --groups core,k8s,ops 2>/dev/null | grep -- --install-extension | sort)"
+groups_out="$(PATH="$fake_bin:$PATH" run_install "$tmp_home" --groups "$role_groups" 2>/dev/null | grep -- --install-extension | sort)"
 if [ -z "$role_out" ] || [ "$role_out" != "$groups_out" ]; then
-  echo "fail: --role sysadmin does not match --groups core,k8s,ops" >&2
+  echo "fail: --role sysadmin does not match --groups $role_groups" >&2
   exit 1
 fi
 if PATH="$fake_bin:$PATH" run_install "$tmp_home" --role tull >/dev/null 2>&1; then
