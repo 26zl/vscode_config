@@ -72,7 +72,7 @@ jobs:
           chmod +x "$bin"
       - name: Check shell formatting
         run: |
-          "$RUNNER_TEMP/shfmt" --diff install.sh test.sh clean-settings.sh bootstrap.sh find-python.sh download-vsix.sh
+          "$RUNNER_TEMP/shfmt" --diff install.sh test.sh clean-settings.sh clean-activitybar.sh bootstrap.sh find-python.sh download-vsix.sh
 
   actionlint:
     runs-on: ubuntu-latest

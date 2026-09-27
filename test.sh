@@ -504,6 +504,83 @@ if ! PATH="$py_bin" PY_FALLBACK_TARGET="$(command -v "$PYTHON")" "$bash_bin" -c 
 fi
 echo "ok: find-python.sh requires Python 3 and falls back to py -3"
 
+# clean-activitybar.sh unpins everything outside its keep lists, backs the
+# database up first, and refuses a layout it does not recognise.
+bar_dir="$tmp_home/clean-activitybar"
+mkdir -p "$bar_dir"
+cp clean-activitybar.sh find-python.sh "$bar_dir/"
+bar_db="$bar_dir/state.vscdb"
+"$PYTHON" - "$bar_db" <<'PY'
+import json
+import sqlite3
+import sys
+
+bar = [
+    {"id": "workbench.view.explorer", "pinned": True, "visible": True, "order": 0},
+    {"id": "workbench.view.extension.gitlens", "pinned": True, "visible": True, "order": 1},
+    {"id": "workbench.view.extension.kubernetesView", "pinned": False, "visible": True, "order": 2},
+]
+panel = [
+    {"id": "terminal", "pinned": True, "visible": True, "order": 0},
+    {"id": "workbench.panel.repl", "pinned": True, "visible": True, "order": 1},
+]
+db = sqlite3.connect(sys.argv[1])
+db.execute("CREATE TABLE ItemTable (key TEXT UNIQUE ON CONFLICT REPLACE, value BLOB)")
+db.execute("INSERT INTO ItemTable VALUES (?, ?)", ("workbench.activity.pinnedViewlets2", json.dumps(bar)))
+db.execute("INSERT INTO ItemTable VALUES (?, ?)", ("workbench.panel.pinnedPanels", json.dumps(panel)))
+db.execute("INSERT INTO ItemTable VALUES (?, ?)", ("unrelated", "kept"))
+db.commit()
+PY
+if ! VSCODE_STATE_DB="$bar_db" bash "$bar_dir/clean-activitybar.sh" --dry-run | grep -q "hide activity bar: workbench.view.extension.gitlens"; then
+  echo "fail: clean-activitybar.sh --dry-run did not list the GitLens icon" >&2
+  exit 1
+fi
+if ls "$bar_dir"/state.vscdb.backup.* >/dev/null 2>&1; then
+  echo "fail: clean-activitybar.sh --dry-run wrote a backup" >&2
+  exit 1
+fi
+VSCODE_STATE_DB="$bar_db" bash "$bar_dir/clean-activitybar.sh" >/dev/null
+"$PYTHON" - "$bar_db" <<'PY'
+import json
+import sqlite3
+import sys
+
+db = sqlite3.connect(sys.argv[1])
+pinned = {key: {item["id"]: item["pinned"] for item in json.loads(value)} for key, value in db.execute("SELECT key, value FROM ItemTable WHERE key LIKE 'workbench.%'")}
+bar = pinned["workbench.activity.pinnedViewlets2"]
+panel = pinned["workbench.panel.pinnedPanels"]
+assert bar["workbench.view.explorer"] is True, "Explorer must stay pinned"
+assert bar["workbench.view.extension.gitlens"] is False, "GitLens must be unpinned"
+assert bar["workbench.view.extension.kubernetesView"] is True, "Kubernetes must be pinned again"
+assert panel["terminal"] is True and panel["workbench.panel.repl"] is False, "panel tabs"
+assert db.execute("SELECT value FROM ItemTable WHERE key = 'unrelated'").fetchone()[0] == "kept"
+PY
+if ! ls "$bar_dir"/state.vscdb.backup.* >/dev/null 2>&1; then
+  echo "fail: clean-activitybar.sh did not back the database up" >&2
+  exit 1
+fi
+if ! VSCODE_STATE_DB="$bar_db" bash "$bar_dir/clean-activitybar.sh" | grep -q "already clean"; then
+  echo "fail: clean-activitybar.sh is not idempotent" >&2
+  exit 1
+fi
+"$PYTHON" - "$bar_db" <<'PY'
+import sqlite3
+import sys
+
+db = sqlite3.connect(sys.argv[1])
+db.execute("UPDATE ItemTable SET value = ? WHERE key = ?", ('{"not": "a list"}', "workbench.panel.pinnedPanels"))
+db.commit()
+PY
+if VSCODE_STATE_DB="$bar_db" bash "$bar_dir/clean-activitybar.sh" >/dev/null 2>&1; then
+  echo "fail: clean-activitybar.sh accepted an unknown layout" >&2
+  exit 1
+fi
+if VSCODE_STATE_DB="$bar_dir/missing.vscdb" bash "$bar_dir/clean-activitybar.sh" >/dev/null 2>&1; then
+  echo "fail: clean-activitybar.sh succeeded without a database" >&2
+  exit 1
+fi
+echo "ok: clean-activitybar.sh unpins outside the keep lists and backs up"
+
 # clean-settings.sh must preserve valid JSON when the Snyk setting is not last.
 clean_dir="$tmp_home/clean-settings"
 mkdir -p "$clean_dir"
@@ -684,7 +761,7 @@ if git rev-parse --git-dir >/dev/null 2>&1; then
 fi
 
 if command -v shellcheck >/dev/null 2>&1; then
-  shellcheck -x install.sh test.sh clean-settings.sh bootstrap.sh find-python.sh download-vsix.sh
+  shellcheck -x install.sh test.sh clean-settings.sh clean-activitybar.sh bootstrap.sh find-python.sh download-vsix.sh
   echo "ok: shellcheck"
 else
   echo "skip: shellcheck not installed"

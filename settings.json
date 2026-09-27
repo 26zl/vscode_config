@@ -20,6 +20,8 @@
   "redhat.telemetry.enabled": false,
   "gitlens.telemetry.enabled": false,
   "gitlens.ai.enabled": false,
+  // Cloud Patches go through GitKraken's service; off also drops its sidebar icon.
+  "gitlens.cloudPatches.enabled": false,
   "atlascode.rovodev.enabled": false,
   // No A/B experiments, no online natural-language settings search.
   "workbench.enableExperiments": false,

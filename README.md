@@ -96,6 +96,15 @@ applies, then `./install.sh --profile <name>` to fill it. The extension CLI only
 accepts an existing profile, and the installer checks it before changing the
 settings file.
 
+Every extension adds its own activity bar icon, and which ones show is UI state
+in `state.vscdb`, not a setting. With VS Code closed, `./clean-activitybar.sh`
+unpins all but Explorer, Search, Source Control, Extensions, Remote Explorer,
+Kubernetes and Containers, and in the panel all but Problems, Output, Terminal
+and Ports; `--dry-run` lists the changes first, and a run backs the database up
+next to itself. Edit the lists at the top of its Python program to keep more;
+right-click the bar in VS Code to bring one back for the day. It applies to
+the default profile only.
+
 ## External tools
 
 ```sh
@@ -184,8 +193,8 @@ stages nothing; `./clean-settings.sh` strips the same keys from the file itself.
 `test.sh` and CI reject those keys in the index and home paths anywhere; the
 path check runs last, since an extension may rewrite the file in the meantime.
 Keep comments in `settings.json` on their own lines, not after values, or the
-test complains. `test.sh` and `clean-settings.sh` need a Python 3 (`python3`,
-`python`, then `py -3`).
+test complains. `test.sh`, `clean-settings.sh` and `clean-activitybar.sh` need
+a Python 3 (`python3`, `python`, then `py -3`).
 
 CI runs the self-check on Ubuntu, macOS and Windows, scans history with
 gitleaks, lints the workflow with actionlint and checks shell formatting with
@@ -213,6 +222,7 @@ manual Update button bypasses that — check the "Last updated" date first.
 | `download-vsix.sh` | Fetches signed VSIX packages and dependencies for `install.sh --download` |
 | `test.sh` | Self-check: settings, groups, installer, offline bundle, allow-list, machine paths |
 | `clean-settings.sh` | Strips machine-specific keys extensions write into `settings.json` |
+| `clean-activitybar.sh` | Hides the activity bar icons and panel tabs a sysadmin does not need |
 | `bootstrap.sh` | Creates a project `.venv` and reports missing system tools |
 | `find-python.sh` | Python 3 lookup for the scripts that need one |
 
