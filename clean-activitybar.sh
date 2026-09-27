@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Unpins every activity bar icon and bottom panel tab that a sysadmin does not
-# need, exactly as right-click -> untick would. Which icons show is UI state
-# in VS Code's state.vscdb, not a setting, so settings.json cannot carry it.
-# Run it with VS Code closed: VS Code writes that database on exit and would
-# undo the change. The lists to keep are at the top of the Python program.
+# need, exactly as right-click -> untick would, and hides the Accounts menu,
+# the sign-in and Settings Sync entry point. That is UI state in VS Code's
+# state.vscdb, not a setting, so settings.json cannot carry it. Run it with
+# VS Code closed: VS Code writes that database on exit and would undo the
+# change. The lists to keep are at the top of the Python program.
 # Usage: ./clean-activitybar.sh [--dry-run]
 # VSCODE_STATE_DB points it at another database (Insiders, a test); the
 # running-VS-Code check then stays with the caller.
@@ -38,6 +39,12 @@ code_running() {
 if [ -n "${VSCODE_STATE_DB:-}" ]; then
   db="$VSCODE_STATE_DB"
 else
+  # WSL looks like Linux, but the VS Code that draws the bar runs on Windows
+  # and keeps its state there.
+  if [ -n "${WSL_DISTRO_NAME:-}" ] || grep -qi microsoft /proc/version 2>/dev/null; then
+    echo "inside WSL; VS Code keeps its UI state on Windows, so run this from Git Bash there. No changes made." >&2
+    exit 1
+  fi
   case "$(uname -s)" in
   Linux) user_dir="${XDG_CONFIG_HOME:-$HOME/.config}/Code/User" ;;
   Darwin) user_dir="$HOME/Library/Application Support/Code/User" ;;
@@ -90,6 +97,10 @@ KEEP = {
     },
 }
 
+# The Accounts menu at the bottom of the bar: the sign-in and Settings Sync
+# entry point. Right-click -> Accounts brings it back.
+ACCOUNTS_KEY = "workbench.activity.showAccounts"
+
 db = Path(sys.argv[1])
 dry_run = sys.argv[2] == "1"
 if not db.is_file():
@@ -99,6 +110,7 @@ conn = sqlite3.connect(db)
 try:
     updates, changes = {}, []
     for key, keep in KEEP.items():
+        label = "activity bar" if key.endswith("pinnedViewlets2") else "panel"
         row = conn.execute("SELECT value FROM ItemTable WHERE key = ?", (key,)).fetchone()
         if row is None:
             # VS Code writes the key once the bar has been touched or on exit.
@@ -114,18 +126,21 @@ try:
         for item in items:
             want = item["id"] in keep
             if item["pinned"] != want:
-                changes.append((key, item["id"], want))
+                changes.append((label, item["id"], want))
                 item["pinned"] = want
         updates[key] = json.dumps(items, separators=(",", ":"))
+    row = conn.execute("SELECT value FROM ItemTable WHERE key = ?", (ACCOUNTS_KEY,)).fetchone()
+    if row is None or row[0] != "false":
+        changes.append(("activity bar", "accounts menu", False))
+        updates[ACCOUNTS_KEY] = "false"
 except sqlite3.DatabaseError as error:
     raise SystemExit(f"cannot read {db}: {error}. No changes made.")
 
 if not changes:
     print("activity bar and panel already clean")
     raise SystemExit
-for key, item_id, want in changes:
-    bar = "activity bar" if key.endswith("pinnedViewlets2") else "panel"
-    print(f"{'show' if want else 'hide'} {bar}: {item_id}")
+for label, item_id, want in changes:
+    print(f"{'show' if want else 'hide'} {label}: {item_id}")
 if dry_run:
     print(f"dry run: {len(changes)} change(s) not written")
     raise SystemExit
@@ -138,7 +153,7 @@ with sqlite3.connect(backup) as copy:
     conn.backup(copy)
 with conn:
     for key, value in updates.items():
-        conn.execute("UPDATE ItemTable SET value = ? WHERE key = ?", (value, key))
+        conn.execute("INSERT OR REPLACE INTO ItemTable (key, value) VALUES (?, ?)", (key, value))
 conn.close()
 print(f"wrote {len(changes)} change(s); backup: {backup}")
 PY

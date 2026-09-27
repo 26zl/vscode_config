@@ -159,9 +159,10 @@ if [ -n "$ROLE" ] && [ "$target_os" = win32 ]; then
   EXT_GROUPS="$EXT_GROUPS,windows"
 fi
 
-# Prints the ids under one [group], or every id when passed "all".
+# Prints the ids under one [group], or every id when passed "all"; "all" only
+# takes the Windows-only group when the target is Windows.
 list_group() {
-  awk -v want="$1" '
+  awk -v want="$1" -v win="$([ "$target_os" = win32 ] && echo 1 || echo 0)" '
     {
       sub(/#.*/, "")
       gsub(/^[ \t]+|[ \t]+$/, "")
@@ -170,7 +171,7 @@ list_group() {
       group = substr($0, 2, length($0) - 2)
       next
     }
-    $0 != "" && (want == "all" || group == want) { print }
+    $0 != "" && (group == want || (want == "all" && (group != "windows" || win == 1))) { print }
   ' "$REPO_DIR/extensions.txt"
 }
 

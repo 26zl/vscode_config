@@ -55,17 +55,19 @@ import json
 import re
 
 raw = open("settings.json", encoding="utf-8").read()
-allowed = json.loads(re.sub(r"^[ \t]*//.*$", "", raw, flags=re.M))["extensions.allowed"]
+allowed = {k.lower(): v for k, v in json.loads(re.sub(r"^[ \t]*//.*$", "", raw, flags=re.M))["extensions.allowed"].items()}
 
-publishers = set()
+ids = set()
 for line in open("extensions.txt", encoding="utf-8"):
     line = line.split("#", 1)[0].strip()
     if line and not line.startswith("[") and "." in line:
-        publishers.add(line.split(".", 1)[0])
+        ids.add(line.split("@", 1)[0].lower())
+publishers = {ext_id.split(".", 1)[0] for ext_id in ids}
 
-blocked = sorted(p for p in publishers if p not in allowed)
+# A bare key allows a publisher, a dotted key one extension.
+blocked = sorted(i for i in ids if allowed.get(i.split(".", 1)[0]) is not True and allowed.get(i) is not True)
 if blocked:
-    raise SystemExit(f"fail: publishers missing from extensions.allowed: {blocked}")
+    raise SystemExit(f"fail: extensions missing from extensions.allowed: {blocked}")
 
 # VS Code resolves Microsoft-published extensions against the org key
 # "microsoft" instead of their ms-* publisher ids.
@@ -220,6 +222,19 @@ if PATH="$fake_bin:$PATH" run_install "$tmp_home" --role sysadmin --groups ops >
   exit 1
 fi
 echo "ok: roles expand to their groups"
+
+# "all" must leave the Windows-only group out everywhere but Windows, where
+# installing it would fail the run.
+case "$(uname -s)" in
+MINGW* | MSYS* | CYGWIN*) want_wsl=1 ;;
+*) want_wsl=0 ;;
+esac
+got_wsl="$(PATH="$fake_bin:$PATH" run_install "$tmp_home" --groups all 2>/dev/null | grep -c -- 'remote-wsl' || true)"
+if [ "$got_wsl" -ne "$want_wsl" ]; then
+  echo "fail: --groups all listed remote-wsl $got_wsl time(s) on $(uname -s)" >&2
+  exit 1
+fi
+echo "ok: --groups all takes the windows group on Windows only"
 
 typo_home="$tmp_home/typo-home"
 if PATH="$fake_bin:$PATH" run_install "$typo_home" --groups nosuchgroup >/dev/null 2>&1; then
@@ -546,13 +561,14 @@ import sqlite3
 import sys
 
 db = sqlite3.connect(sys.argv[1])
-pinned = {key: {item["id"]: item["pinned"] for item in json.loads(value)} for key, value in db.execute("SELECT key, value FROM ItemTable WHERE key LIKE 'workbench.%'")}
+pinned = {key: {item["id"]: item["pinned"] for item in json.loads(value)} for key, value in db.execute("SELECT key, value FROM ItemTable WHERE key IN ('workbench.activity.pinnedViewlets2', 'workbench.panel.pinnedPanels')")}
 bar = pinned["workbench.activity.pinnedViewlets2"]
 panel = pinned["workbench.panel.pinnedPanels"]
 assert bar["workbench.view.explorer"] is True, "Explorer must stay pinned"
 assert bar["workbench.view.extension.gitlens"] is False, "GitLens must be unpinned"
 assert bar["workbench.view.extension.kubernetesView"] is True, "Kubernetes must be pinned again"
 assert panel["terminal"] is True and panel["workbench.panel.repl"] is False, "panel tabs"
+assert db.execute("SELECT value FROM ItemTable WHERE key = 'workbench.activity.showAccounts'").fetchone()[0] == "false", "accounts menu"
 assert db.execute("SELECT value FROM ItemTable WHERE key = 'unrelated'").fetchone()[0] == "kept"
 PY
 if ! ls "$bar_dir"/state.vscdb.backup.* >/dev/null 2>&1; then
@@ -579,6 +595,16 @@ if VSCODE_STATE_DB="$bar_dir/missing.vscdb" bash "$bar_dir/clean-activitybar.sh"
   echo "fail: clean-activitybar.sh succeeded without a database" >&2
   exit 1
 fi
+# Inside WSL the database is on the Windows side; the script must say so
+# instead of looking for it in the Linux home.
+wsl_out="$(WSL_DISTRO_NAME=Ubuntu bash "$bar_dir/clean-activitybar.sh" 2>&1 || true)"
+case "$wsl_out" in
+*"inside WSL"*) ;;
+*)
+  echo "fail: clean-activitybar.sh did not point WSL users to Git Bash: $wsl_out" >&2
+  exit 1
+  ;;
+esac
 echo "ok: clean-activitybar.sh unpins outside the keep lists and backs up"
 
 # clean-settings.sh must preserve valid JSON when the Snyk setting is not last.

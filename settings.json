@@ -27,21 +27,28 @@
   "workbench.enableExperiments": false,
   "workbench.settings.enableNaturalLanguageSearch": false,
 
+  // Built-in AI and accounts
+  // Hides Copilot chat, the agents views and windows and inline suggestions,
+  // and disables the bundled Copilot extension; the [ai] group is unaffected.
+  "chat.disableAIFeatures": true,
+  // Cloud Changes would keep working changes under a GitHub or Microsoft
+  // account; off also ends its sign-in prompts.
+  "workbench.cloudChanges.autoResume": "off",
+  "workbench.cloudChanges.continueOn": "off",
+  "workbench.experimental.cloudChanges.autoStore": "off",
+
   // Extension supply chain
-  // Minimum release age for updates: a new version must be 5 days (120 hours)
-  // old before it is auto-installed, so a poisoned release can be caught and
-  // pulled first. The manual Update button bypasses the delay — check the
-  // release date before using it. VS Code exempts its trusted publishers
-  // (Microsoft, GitHub, OpenAI) from the delay.
+  // Updates wait 120 hours (5 days) so a poisoned release can be caught and
+  // pulled first; the manual Update button and VS Code's trusted publishers
+  // (Microsoft, GitHub, OpenAI) bypass the delay.
   "extensions.autoUpdate": "on",
   "extensions.autoUpdateDelay": 120,
   "extensions.autoCheckUpdates": true,
   // Marketplace signature check, CLI installs included.
   "extensions.verifySignature": true,
-  // Install allow-list: a key without a dot is a publisher id; anything not
-  // listed is blocked. Extend deliberately when adopting a new publisher.
-  // Marketplace installs match every Microsoft publisher against the org key
-  // "microsoft"; VSIX installs (install.sh --offline) match the ms-* ids.
+  // Install allow-list: a bare key is a publisher, a dotted key one extension;
+  // anything not listed is blocked. Microsoft publishers match the org key
+  // "microsoft" on Marketplace installs and their ms-* ids on VSIX installs.
   "extensions.allowed": {
     "anthropic": true,
     "atlassian": true,
@@ -55,7 +62,9 @@
     "editorconfig": true,
     "emilast": true,
     "esbenp": true,
-    "github": true,
+    // Only the two GitHub extensions in extensions.txt, so Copilot stays out.
+    "github.vscode-github-actions": true,
+    "github.vscode-pull-request-github": true,
     "hangxingliu": true,
     "hashicorp": true,
     "llvm-vs-code-extensions": true,
@@ -82,9 +91,8 @@
     "usernamehw": true,
     "vue": true
   },
-  // Settings Sync is off (see README) — the symlink distributes this file.
-  // These stay as a guard for anyone who turns it on: machine-bound state
-  // must never follow the account.
+  // Settings Sync stays off (README); these guard anyone who turns it on, as
+  // machine-bound state must never follow the account.
   "settingsSync.ignoredExtensions": ["snyk-security.snyk-vulnerability-scanner"],
   "settingsSync.ignoredSettings": [
     "snyk.advanced.cliPath",
@@ -317,12 +325,9 @@
   "js/ts.updateImportsOnFileMove.enabled": "always",
 
   // Per-language overrides
-  // Sticky scroll stays off elsewhere; in YAML the pinned parent keys show
-  // which indentation level the cursor is in, and keyboard movement inside
-  // indentation snaps to 2-space columns.
-  // YAML values are string tokens, so quick suggestions must cover strings for
-  // option values to pop up; word-based items are off so only the language
-  // server's suggestions appear there.
+  // Sticky scroll and 2-space tab stops keep deep YAML indentation readable.
+  // Values are string tokens, so quick suggestions must include strings, and
+  // word-based items are off so only the language server's suggestions show.
   "[ansible][yaml]": {
     "editor.insertSpaces": true,
     "editor.tabSize": 2,

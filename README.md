@@ -2,8 +2,9 @@
 
 One safe, predictable VS Code baseline for Linux, macOS and Windows, locally
 and over Remote-SSH. Untrusted folders open in restricted mode with automatic
-tasks and terminals blocked; telemetry, experiments, the AI features bundled
-with GitLens and Atlassian, format-on-save and Git autofetch are off. Anything
+tasks and terminals blocked; telemetry, experiments, VS Code's built-in Copilot
+and Cloud Changes, the AI features bundled with GitLens, Ansible and Atlassian,
+format-on-save and Git autofetch are off. Anything
 that applies to a single repo belongs in that repo's `.vscode/settings.json`,
 not here; this `settings.json` is commented section by section and is the
 reference for what is set and why.
@@ -63,8 +64,8 @@ cannot elevate on its own.
 `extensions.txt` is split into `[groups]`; `install.sh` installs `[core]`
 unless told otherwise. Roles bundle them: `sysadmin` = core,k8s,ops ·
 `cybersec` = core,k8s,ops,security · `fullstack` = core,fullstack,ops. On
-Windows, or for a `--download --platform win32-*` bundle, every role also
-takes `windows`.
+Windows, or for a `--download --platform win32-*` bundle, every role and
+`all` also take `windows`; elsewhere `all` leaves it out.
 
 | Group | What |
 | --- | --- |
@@ -99,11 +100,13 @@ settings file.
 Every extension adds its own activity bar icon, and which ones show is UI state
 in `state.vscdb`, not a setting. With VS Code closed, `./clean-activitybar.sh`
 unpins all but Explorer, Search, Source Control, Extensions, Remote Explorer,
-Kubernetes and Containers, and in the panel all but Problems, Output, Terminal
-and Ports; `--dry-run` lists the changes first, and a run backs the database up
-next to itself. Edit the lists at the top of its Python program to keep more;
+Kubernetes and Containers, in the panel all but Problems, Output, Terminal and
+Ports, and hides the Accounts menu, the sign-in and Settings Sync entry point;
+`--dry-run` lists the changes first, and a run backs the database up next to
+itself. Edit the lists at the top of its Python program to keep more;
 right-click the bar in VS Code to bring one back for the day. It applies to
-the default profile only.
+the default profile only, and on Windows it runs from Git Bash, not inside
+WSL, where VS Code keeps no UI state.
 
 ## External tools
 
@@ -207,7 +210,15 @@ Keep Settings Sync **off** (`code --sync off`): the symlink already
 distributes the file, Sync would push machine-bound extension state such as
 Snyk's CLI path to every machine, and it skips the machine-scoped Ansible and
 `python-envs.*` keys. `settingsSync.ignoredSettings` and
-`settingsSync.ignoredExtensions` guard anyone who turns it on anyway.
+`settingsSync.ignoredExtensions` guard anyone who turns it on anyway. No
+setting or policy removes Sync or sign-in from VS Code; `clean-activitybar.sh`
+hides their Accounts menu, and `chat.disableAIFeatures` with the Cloud Changes
+keys in `settings.json` remove the built-in Copilot and its sign-in prompts.
+On a managed machine the allow-list, update delay, telemetry level and agent
+mode can be enforced with VS Code's policies (`policies/VSCode.admx` in the
+install directory for the Windows registry key
+`Software\Policies\Microsoft\VSCode`, a configuration profile on macOS,
+`/etc/vscode/policy.json` on Linux).
 
 Extension updates install automatically once a release is 5 days old. The
 manual Update button bypasses that — check the "Last updated" date first.

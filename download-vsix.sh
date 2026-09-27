@@ -117,6 +117,9 @@ while queue:
     except (OSError, ValueError) as error:
         failed.append(f"{ext_id}: {error}")
         continue
+    except (KeyError, TypeError) as error:
+        failed.append(f"{ext_id}: unexpected gallery response ({error!r})")
+        continue
     print(f'{ext_id} {version["version"]} ({version.get("targetPlatform", "universal")})')
     for key, pack in (("ExtensionDependencies", False), ("ExtensionPack", True)):
         for dep in filter(None, prop(version, f"Microsoft.VisualStudio.Code.{key}").split(",")):

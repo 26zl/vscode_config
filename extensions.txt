@@ -82,8 +82,9 @@ ms-vscode.live-server
 
 [windows]
 # Windows-only, so it cannot live in [core]: installing it on Linux or macOS
-# would fail the run. Every --role adds this group on Windows instead. Needed
-# for Remote-WSL windows. Closed source, like the other two remote extensions.
+# would fail the run. Every --role, and "all", takes this group on Windows
+# only. Needed for Remote-WSL windows. Closed source, like the other two
+# remote extensions.
 ms-vscode-remote.remote-wsl
 
 [ai]
