@@ -235,12 +235,19 @@
   "terminal.integrated.enableMultiLinePasteWarning": "auto",
   // Warn before closing the window while ssh/top/etc. is still running.
   "terminal.integrated.confirmOnExit": "hasChildProcesses",
-  "terminal.integrated.defaultProfile.linux": "zsh",
-  // First existing path wins, so a minimal server without zsh still opens
-  // a shell instead of failing.
+  "terminal.integrated.defaultProfile.linux": "shell",
+  // First existing path wins: fish, then zsh, and a minimal server with
+  // neither still opens bash instead of failing.
   "terminal.integrated.profiles.linux": {
-    "zsh": {
-      "path": ["/usr/bin/zsh", "/bin/zsh", "/usr/local/bin/zsh", "/bin/bash"],
+    "shell": {
+      "path": [
+        "/usr/bin/fish",
+        "/usr/local/bin/fish",
+        "/usr/bin/zsh",
+        "/bin/zsh",
+        "/usr/local/bin/zsh",
+        "/bin/bash"
+      ],
       "args": ["-l"]
     }
   },
