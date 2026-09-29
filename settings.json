@@ -235,33 +235,15 @@
   "terminal.integrated.enableMultiLinePasteWarning": "auto",
   // Warn before closing the window while ssh/top/etc. is still running.
   "terminal.integrated.confirmOnExit": "hasChildProcesses",
-  "terminal.integrated.defaultProfile.linux": "shell",
-  // First existing path wins: fish, then zsh, and a minimal server with
-  // neither still opens bash instead of failing.
-  "terminal.integrated.profiles.linux": {
-    "shell": {
-      "path": [
-        "/usr/bin/fish",
-        "/usr/local/bin/fish",
-        "/usr/bin/zsh",
-        "/bin/zsh",
-        "/usr/local/bin/zsh",
-        "/bin/bash"
-      ],
-      "args": ["-l"]
-    }
-  },
+  // No default profile: every OS opens the user's own shell, $SHELL on Linux
+  // and macOS and PowerShell on Windows, as VS Code does out of the box.
   // Tasks and tools get plain bash, independent of the interactive shell.
   "terminal.integrated.automationProfile.linux": {
     "path": "/bin/bash"
   },
-  "terminal.integrated.defaultProfile.osx": "zsh",
   "terminal.integrated.automationProfile.osx": {
     "path": "/bin/bash"
   },
-  // VS Code's built-in profile already prefers PowerShell 7 and falls back to
-  // Windows PowerShell, so no path is hardcoded here.
-  "terminal.integrated.defaultProfile.windows": "PowerShell",
   // Windows PowerShell ships with every install, so tasks and tools get a
   // shell that is there even when PowerShell 7 is not.
   "terminal.integrated.automationProfile.windows": {
